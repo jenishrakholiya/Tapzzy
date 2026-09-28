@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, AlertCircle } from 'lucide-react';
+import { Scale } from 'lucide-react';
 import { PolicyLayout } from '../components/PolicyLayout';
 
 export const TermsPage = () => {

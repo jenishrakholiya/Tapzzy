@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin-tap
 Disallow: /account
+Disallow: /checkout
+Disallow: /order-confirmation
 
 Sitemap: https://tapzyy.com/sitemap.xml

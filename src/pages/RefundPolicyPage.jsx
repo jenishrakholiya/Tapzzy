@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, AlertTriangle, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { PolicyLayout } from '../components/PolicyLayout';
 
 export const RefundPolicyPage = () => {

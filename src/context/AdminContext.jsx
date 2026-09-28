@@ -31,7 +31,7 @@ export const AdminProvider = ({ children }) => {
         const found = parsed.find(p => p.id === defP.id);
         return found ? { ...defP, ...found, gallery: defP.gallery, image: defP.image } : defP;
       });
-    } catch (_e) {
+    } catch {
       return DEFAULT_PRODUCTS;
     }
   });

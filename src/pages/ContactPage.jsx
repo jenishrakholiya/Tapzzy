@@ -29,7 +29,7 @@ export const ContactPage = () => {
     textArea.select();
     try {
       document.execCommand('copy');
-    } catch (e) {
+    } catch {
       // Fallback silent
     }
     document.body.removeChild(textArea);

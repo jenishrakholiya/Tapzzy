@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Lock, Eye, CreditCard, Cookie, Share2, Server, RefreshCw, Mail } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { PolicyLayout } from '../components/PolicyLayout';
 
 export const PrivacyPolicyPage = () => {

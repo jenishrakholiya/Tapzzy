@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Star, 
@@ -203,7 +203,7 @@ export default function ReviewWallSection({
 
   const totalFrames = Math.ceil(reviews.length / 3);
 
-  const updateScrollState = () => {
+  const updateScrollState = useCallback(() => {
     if (!sliderRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
     setCanScrollLeft(scrollLeft > 15);
@@ -211,13 +211,13 @@ export default function ReviewWallSection({
 
     const frameIdx = Math.round(scrollLeft / (clientWidth || 1));
     setActiveFrame(Math.min(Math.max(0, frameIdx), totalFrames - 1));
-  };
+  }, [totalFrames]);
 
   useEffect(() => {
     updateScrollState();
     window.addEventListener('resize', updateScrollState);
     return () => window.removeEventListener('resize', updateScrollState);
-  }, [reviews]);
+  }, [updateScrollState]);
 
   const handlePrev = () => {
     if (!sliderRef.current) return;

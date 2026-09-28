@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
-  const login = (email, password) => {
+  const login = (email, _password) => {
     const cleanEmail = email.trim().toLowerCase();
     if (cleanEmail === 'admin@tapzyy.com' || cleanEmail === 'admin@tapzyy.in' || cleanEmail === 'jenishrakholiya2005@gmail.com') {
       setUser(DEMO_ADMIN);
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
     return { success: true, role: 'admin' };
   };
 
-  const signup = ({ name, email, phone, businessName, password }) => {
+  const signup = ({ name, email, phone, businessName, password: _password }) => {
     const newUser = {
       id: `usr_${Date.now()}`,
       name,
