@@ -51,7 +51,7 @@ feature/<feature-name> (Active Development & Bug Fixes)
 
 ## ⚡ Vercel Deployment Guide
 
-1. **Connect Repository**: Import `https://github.com/jenishrakholiya/Tapzzy-Admin.git` on [Vercel](https://vercel.com).
+1. **Connect Repository**: Import `https://github.com/jenishrakholiya/Tapzzy.git` on [Vercel](https://vercel.com).
 2. **Production Branch**: Set **`main`** as your Production Branch.
 3. **Framework Preset**: Vite (detected automatically via `vercel.json`).
 4. **Build Command**: `npm run build`
