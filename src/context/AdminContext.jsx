@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
+import { fetchProductsFromDb, updateProductInDb } from '../lib/supabaseService';
 
 const AdminContext = createContext();
 
@@ -30,10 +31,18 @@ export const AdminProvider = ({ children }) => {
         const found = parsed.find(p => p.id === defP.id);
         return found ? { ...defP, ...found, gallery: defP.gallery, image: defP.image } : defP;
       });
-    } catch (e) {
+    } catch (_e) {
       return DEFAULT_PRODUCTS;
     }
   });
+
+  useEffect(() => {
+    fetchProductsFromDb().then(({ products: remoteProducts, fromDb }) => {
+      if (fromDb && remoteProducts && remoteProducts.length > 0) {
+        setProducts(remoteProducts);
+      }
+    });
+  }, []);
 
   const [siteContent, setSiteContent] = useState(() => {
     const saved = localStorage.getItem('tapzyy_site_content');
@@ -57,8 +66,9 @@ export const AdminProvider = ({ children }) => {
     localStorage.setItem('tapzyy_active_products', JSON.stringify(activeProducts));
   }, [activeProducts]);
 
-  const updateProduct = (productId, updatedFields) => {
+  const updateProduct = async (productId, updatedFields) => {
     setProducts(prev => prev.map(p => p.id === productId ? { ...p, ...updatedFields } : p));
+    await updateProductInDb(productId, updatedFields);
   };
 
   const resetProducts = () => {

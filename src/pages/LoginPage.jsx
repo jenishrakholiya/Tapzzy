@@ -15,7 +15,7 @@ export const LoginPage = () => {
     e.preventDefault();
     const res = login(email, password);
     if (res.role === 'admin') {
-      navigate('/admin');
+      navigate('/admin-tap');
     } else {
       navigate('/account');
     }
@@ -28,7 +28,7 @@ export const LoginPage = () => {
 
   const handleDemoAdmin = () => {
     loginDemoAdmin();
-    navigate('/admin');
+    navigate('/admin-tap');
   };
 
   return (

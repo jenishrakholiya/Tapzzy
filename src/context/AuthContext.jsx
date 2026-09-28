@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = (email, password) => {
     const cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail === 'admin@tapzyy.com') {
+    if (cleanEmail === 'admin@tapzyy.com' || cleanEmail === 'admin@tapzyy.in' || cleanEmail === 'jenishrakholiya2005@gmail.com') {
       setUser(DEMO_ADMIN);
       return { success: true, role: 'admin' };
     }
@@ -66,6 +66,29 @@ export const AuthProvider = ({ children }) => {
     };
     setUser(loggedInUser);
     return { success: true, role: 'customer' };
+  };
+
+  const adminLogin = (email, password) => {
+    const clean = email.trim().toLowerCase();
+    if (
+      clean === 'admin@tapzyy.com' ||
+      clean === 'admin@tapzyy.in' ||
+      clean === 'jenishrakholiya2005@gmail.com' ||
+      password === 'admin123' ||
+      password === 'tapzyy2026' ||
+      password === 'admin'
+    ) {
+      setUser({
+        id: "usr_admin_01",
+        name: clean.includes('jenish') ? "Jenish Rakholiya (Admin)" : "Tapzyy Admin",
+        email: clean || "admin@tapzyy.com",
+        phone: "+91 99999 88888",
+        businessName: "Tapzyy India HQ",
+        role: "admin"
+      });
+      return { success: true };
+    }
+    return { success: false, error: 'Invalid admin credentials. (Hint: use admin@tapzyy.com or password "admin123")' };
   };
 
   const loginDemoCustomer = () => {
@@ -111,6 +134,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         login,
+        adminLogin,
         loginDemoCustomer,
         loginDemoAdmin,
         signup,

@@ -263,7 +263,7 @@ export const Navbar = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             {user && isAdmin && (
               <Link
-                to="/admin"
+                to="/admin-tap"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -550,7 +550,7 @@ export const Navbar = () => {
 
                 {user && isAdmin && (
                   <Link
-                    to="/admin"
+                    to="/admin-tap"
                     onClick={() => setMobileMenuOpen(false)}
                     style={{
                       display: 'flex',

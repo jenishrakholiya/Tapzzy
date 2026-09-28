@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchOrders, createOrderInDb, updateOrderInDb, checkSupabaseStatus } from '../lib/supabaseService';
 
 const OrderContext = createContext();
 
@@ -95,11 +96,26 @@ export const OrderProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_ORDERS;
   });
 
+  const [dbStatus, setDbStatus] = useState({ isConnected: false, tableReady: false, message: 'Checking...' });
+
+  const loadOrdersFromDb = async () => {
+    const status = await checkSupabaseStatus();
+    setDbStatus(status);
+    const { orders: remoteOrders, fromDb } = await fetchOrders();
+    if (fromDb && remoteOrders.length > 0) {
+      setOrders(remoteOrders);
+    }
+  };
+
+  useEffect(() => {
+    loadOrdersFromDb();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('tapzyy_orders', JSON.stringify(orders));
   }, [orders]);
 
-  const createOrder = (orderData) => {
+  const createOrder = async (orderData) => {
     const newId = `TPZ-${Math.floor(10000 + Math.random() * 90000)}`;
     const now = new Date().toISOString();
     
@@ -116,15 +132,18 @@ export const OrderProvider = ({ children }) => {
       paymentStatus: orderData.paymentStatus || 'Paid',
       orderStatus: 'Order Placed',
       trackingNumber: '',
-      courierPartner: 'Delhivery / DTDC',
-      estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      courierPartner: 'Delhivery Express',
+      estimatedDelivery: '3-5 Business Days',
       history: [
         { status: 'Order Placed', timestamp: now, note: 'Order received via online store.' },
         { status: 'Payment Confirmed', timestamp: now, note: 'Payment verified via secure gateway.' }
       ]
     };
 
-    setOrders((prev) => [newOrder, ...prev]);
+    setOrders((prev) => [newOrder, ...prev.filter(o => o.id !== newOrder.id)]);
+    
+    // Save to Supabase asynchronously
+    createOrderInDb(newOrder).catch((err) => console.warn('Supabase order sync error:', err));
     return newOrder;
   };
 
@@ -144,25 +163,43 @@ export const OrderProvider = ({ children }) => {
     );
   };
 
-  const updateOrderStatus = (orderId, newStatus, trackingNumber = '', note = '') => {
+  const updateOrderStatus = async (orderId, newStatus, trackingNumber = '', courierPartner = '', note = '') => {
+    const now = new Date().toISOString();
+    let updatedOrder = null;
+
     setOrders((prev) =>
       prev.map((ord) => {
         if (ord.id === orderId) {
-          const now = new Date().toISOString();
           const updatedHistory = [
             ...ord.history,
             { status: newStatus, timestamp: now, note: note || `Status updated to ${newStatus}` }
           ];
-          return {
+          updatedOrder = {
             ...ord,
             orderStatus: newStatus,
             trackingNumber: trackingNumber || ord.trackingNumber,
+            courierPartner: courierPartner || ord.courierPartner || 'Delhivery Express',
             history: updatedHistory
           };
+          return updatedOrder;
         }
         return ord;
       })
     );
+
+    // Sync to Supabase
+    if (updatedOrder) {
+      await updateOrderInDb(orderId, {
+        orderStatus: newStatus,
+        trackingNumber: trackingNumber || updatedOrder.trackingNumber,
+        courierPartner: courierPartner || updatedOrder.courierPartner,
+        history: updatedOrder.history
+      });
+    }
+  };
+
+  const refreshOrders = async () => {
+    await loadOrdersFromDb();
   };
 
   return (
@@ -172,7 +209,9 @@ export const OrderProvider = ({ children }) => {
         createOrder,
         getOrderById,
         findOrdersByCustomer,
-        updateOrderStatus
+        updateOrderStatus,
+        refreshOrders,
+        dbStatus
       }}
     >
       {children}

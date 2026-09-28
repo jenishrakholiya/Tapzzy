@@ -11,7 +11,8 @@ import {
   Edit3,
   Play,
   Volume2,
-  VolumeX
+  VolumeX,
+  ChevronDown
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import './AiReviewSuitePage.css';

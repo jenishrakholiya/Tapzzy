@@ -42,6 +42,7 @@ function ConditionalReviewWall() {
     '/refund-policy',
     '/checkout',
     '/order-confirmation',
+    '/admin-tap',
     '/admin',
     '/contact'
   ];
@@ -96,7 +97,8 @@ export function App() {
                     <Route path="/login" element={<Navigate to="/" replace />} />
                     <Route path="/signup" element={<Navigate to="/" replace />} />
                     <Route path="/account" element={<Navigate to="/" replace />} />
-                    <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/admin-tap" element={<AdminPage />} />
+                    <Route path="/admin" element={<Navigate to="/" replace />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/shipping-policy" element={<ShippingPolicyPage />} />

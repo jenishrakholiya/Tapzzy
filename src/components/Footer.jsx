@@ -160,7 +160,6 @@ export const Footer = () => {
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.8rem', fontSize: '0.9rem' }} className="footer-links">
               <li><Link to="/shop">Shop Products</Link></li>
               <li><Link to="/cart">View Shopping Cart</Link></li>
-              <li><Link to="/admin" style={{ color: 'rgba(255, 255, 255, 0.65)' }}>Admin Dashboard</Link></li>
             </ul>
           </div>
 
