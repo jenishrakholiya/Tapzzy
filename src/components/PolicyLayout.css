@@ -1,0 +1,335 @@
+/**
+ * PolicyLayout.css
+ * Clean, modern, scannable layout for Tapzyy legal & policy pages.
+ */
+
+.policy-page {
+  background-color: #F8F9FA;
+  min-height: calc(100vh - 200px);
+  padding: 40px 0 80px 0;
+  color: #1E293B;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+}
+
+@media (max-width: 767px) {
+  .policy-page {
+    padding: 24px 0 60px 0;
+  }
+}
+
+.policy-container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (max-width: 599px) {
+  .policy-container {
+    padding: 0 1rem;
+  }
+}
+
+/* BREADCRUMB */
+.policy-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+  color: #64748B;
+}
+
+.policy-breadcrumb-link {
+  color: #64748B;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.policy-breadcrumb-link:hover {
+  color: #0066FF;
+}
+
+.policy-breadcrumb-sep {
+  color: #CBD5E1;
+}
+
+.policy-breadcrumb-active {
+  color: #0B1220;
+  font-weight: 600;
+}
+
+/* HERO HEADER */
+.policy-hero-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.policy-hero-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  margin-bottom: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.policy-hero-brand:hover {
+  transform: translateY(-2px);
+}
+
+.policy-hero-logo {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
+  object-fit: contain;
+}
+
+.policy-hero-brand-name {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #0B1220;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.policy-hero-brand-dot {
+  color: #0066FF;
+}
+
+.policy-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: #EFF6FF;
+  color: #0066FF;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.95rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 102, 255, 0.15);
+  margin-bottom: 1rem;
+}
+
+.policy-hero-title {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: clamp(2rem, 3.8vw, 2.75rem);
+  font-weight: 800;
+  color: #0B1220;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.65rem;
+}
+
+.policy-hero-meta {
+  font-size: 0.9rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.policy-hero-meta strong {
+  color: #334155;
+}
+
+/* MAIN CONTENT CARD */
+.policy-main-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 24px;
+  padding: 3rem 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+@media (max-width: 767px) {
+  .policy-main-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 20px;
+  }
+}
+
+/* SECTION TYPOGRAPHY & SPACING */
+.policy-content-body {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: #334155;
+}
+
+.policy-section {
+  margin-bottom: 2.25rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.policy-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.policy-section-title {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0B1220;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.policy-section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background-color: #EFF6FF;
+  color: #0066FF;
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.policy-text {
+  margin-bottom: 0.75rem;
+  color: #475569;
+}
+
+.policy-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.policy-list-item {
+  position: relative;
+  padding-left: 1.4rem;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.policy-list-item::before {
+  content: "";
+  position: absolute;
+  left: 0.35rem;
+  top: 0.65rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #0066FF;
+}
+
+/* HIGHLIGHT / NOTICE CALLOUT */
+.policy-notice {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 4px solid #0066FF;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  font-size: 0.92rem;
+  color: #1E293B;
+  line-height: 1.6;
+}
+
+.policy-notice.alert {
+  background-color: #FFFBEB;
+  border-color: #FDE68A;
+  border-left-color: #F59E0B;
+  color: #92400E;
+}
+
+.policy-notice strong {
+  color: #0B1220;
+}
+
+.policy-notice.alert strong {
+  color: #78350F;
+}
+
+/* CONTACT SUPPORT FOOTER BOX */
+.policy-contact-card {
+  margin-top: 3rem;
+  background: linear-gradient(135deg, #F0F6FF 0%, #EFF6FF 100%);
+  border: 1px solid rgba(0, 102, 255, 0.18);
+  border-radius: 20px;
+  padding: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .policy-contact-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.4rem;
+    gap: 1rem;
+  }
+}
+
+.policy-contact-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background-color: #0066FF;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+}
+
+.policy-contact-details {
+  flex: 1;
+}
+
+.policy-contact-heading {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0B1220;
+  margin-bottom: 0.35rem;
+}
+
+.policy-contact-sub {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 0.85rem;
+}
+
+.policy-contact-email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #0066FF;
+  color: #FFFFFF;
+  font-weight: 750;
+  font-size: 0.92rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+}
+
+.policy-contact-email-btn:hover {
+  background-color: #0052CC;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 102, 255, 0.35);
+  color: #FFFFFF;
+}

@@ -1,0 +1,216 @@
+/**
+ * SeeInActionSection.css
+ * Styling for the Product Detail Page "See Tapzyy in Action" section
+ */
+
+.see-in-action-section {
+  padding: 85px 0;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid var(--color-line, #E8ECF2);
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .see-in-action-section {
+    padding: 56px 0;
+  }
+}
+
+.see-in-action-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* HEADER */
+.see-in-action-header {
+  text-align: center;
+  max-width: 740px;
+  margin: 0 auto 3.5rem auto;
+}
+
+.see-in-action-badge {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand-primary, #0066FF);
+  background-color: var(--color-brand-light, #F0F6FF);
+  border-radius: 9999px;
+  margin-bottom: 0.85rem;
+}
+
+.see-in-action-title {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  color: var(--color-ink, #0B1220);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.75rem;
+}
+
+.see-in-action-subtitle {
+  font-size: clamp(0.98rem, 1.8vw, 1.1rem);
+  color: var(--color-ink-soft, #4B5768);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* TWO COLUMN GRID */
+.see-in-action-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 3.5rem;
+  align-items: center;
+}
+
+@media (max-width: 991px) {
+  .see-in-action-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* LEFT SIDE: VIDEO CONTAINER */
+.see-in-action-video-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px -10px rgba(0, 102, 255, 0.18), 0 4px 16px rgba(11, 18, 32, 0.06);
+  border: 1px solid #EAEAEA;
+  background-color: #080E1A;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.see-in-action-video {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* RIGHT SIDE: EDITORIAL 3-STEP FLOW */
+.see-in-action-steps-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.see-in-action-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  margin-bottom: 2.25rem;
+}
+
+.see-in-action-step-item {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #EAEAEA;
+}
+
+.see-in-action-step-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.see-in-action-step-num {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-brand-primary, #0066FF);
+  background-color: var(--color-brand-light, #F0F6FF);
+  padding: 0.4rem 0.85rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.see-in-action-step-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.see-in-action-step-title {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-ink, #0B1220);
+  margin-bottom: 0.35rem;
+}
+
+.see-in-action-step-desc {
+  font-size: 0.95rem;
+  color: var(--color-ink-soft, #4B5768);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* MICRO CTA */
+.see-in-action-cta-wrap {
+  margin-top: 0.5rem;
+}
+
+.see-in-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-brand-primary, #0066FF);
+  color: #FFFFFF;
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-weight: 700;
+  font-size: 0.98rem;
+  padding: 0.85rem 1.85rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.28);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.see-in-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 102, 255, 0.35);
+  background-color: var(--color-brand-hover, #0052CC);
+}
+
+/* MOBILE VERTICAL STACK ORDER */
+@media (max-width: 991px) {
+  .see-in-action-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .see-in-action-video-wrapper {
+    order: 1;
+    border-radius: 18px;
+    padding: 0;
+  }
+
+  .see-in-action-video {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .see-in-action-steps-column {
+    order: 2;
+    width: 100%;
+  }
+
+  .see-in-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
