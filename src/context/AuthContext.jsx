@@ -24,19 +24,21 @@ const DEMO_CUSTOMER = {
   ]
 };
 
-const DEMO_ADMIN = {
-  id: "usr_admin_01",
-  name: "Tapzyy Admin",
-  email: "admin@tapzyy.com",
-  phone: "+91 99999 88888",
-  businessName: "Tapzyy India HQ",
-  role: "admin"
-};
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('tapzyy_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('tapzyy_user');
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      // For security, admin role requires an active sessionStorage session
+      if (parsed.role === 'admin') {
+        const hasSession = sessionStorage.getItem('tapzyy_admin_session');
+        return hasSession === 'true' ? parsed : null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
@@ -49,12 +51,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = (email, _password) => {
     const cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail === 'admin@tapzyy.com' || cleanEmail === 'admin@tapzyy.in' || cleanEmail === 'jenishrakholiya2005@gmail.com') {
-      setUser(DEMO_ADMIN);
-      return { success: true, role: 'admin' };
-    }
     
-    // Any other user email logs in as customer
+    // Any customer email logs in as customer
     const loggedInUser = {
       id: `usr_${Date.now()}`,
       name: email.split('@')[0].replace('.', ' ').toUpperCase() || 'Business Owner',
@@ -68,37 +66,47 @@ export const AuthProvider = ({ children }) => {
     return { success: true, role: 'customer' };
   };
 
-  const adminLogin = (email, password) => {
-    const clean = email.trim().toLowerCase();
-    if (
-      clean === 'admin@tapzyy.com' ||
-      clean === 'admin@tapzyy.in' ||
-      clean === 'jenishrakholiya2005@gmail.com' ||
-      password === 'admin123' ||
-      password === 'tapzyy2026' ||
-      password === 'admin'
-    ) {
-      setUser({
+  const adminLogin = (identifier, password) => {
+    const cleanId = (identifier || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim();
+
+    if (!cleanId || !cleanPass) {
+      return { success: false, error: 'Please enter both Admin ID/Email and Password.' };
+    }
+
+    const validIds = [
+      'admin@tapzyy.com',
+      'admin@tapzyy.in',
+      'jenishrakholiya2005@gmail.com',
+      'admin'
+    ];
+
+    const validPasswords = [
+      'admin123',
+      'tapzyy@2026',
+      'admin@123'
+    ];
+
+    if (validIds.includes(cleanId) && validPasswords.includes(cleanPass)) {
+      const adminUser = {
         id: "usr_admin_01",
-        name: clean.includes('jenish') ? "Jenish Rakholiya (Admin)" : "Tapzyy Admin",
-        email: clean || "admin@tapzyy.com",
+        name: cleanId.includes('jenish') ? "Jenish Rakholiya" : "Tapzyy Admin",
+        email: cleanId.includes('@') ? cleanId : "admin@tapzyy.com",
         phone: "+91 99999 88888",
         businessName: "Tapzyy India HQ",
         role: "admin"
-      });
+      };
+      sessionStorage.setItem('tapzyy_admin_session', 'true');
+      setUser(adminUser);
       return { success: true };
     }
-    return { success: false, error: 'Invalid admin credentials. (Hint: use admin@tapzyy.com or password "admin123")' };
+
+    return { success: false, error: 'Incorrect Admin ID or Password. Access denied.' };
   };
 
   const loginDemoCustomer = () => {
     setUser(DEMO_CUSTOMER);
     return { success: true, role: 'customer' };
-  };
-
-  const loginDemoAdmin = () => {
-    setUser(DEMO_ADMIN);
-    return { success: true, role: 'admin' };
   };
 
   const signup = ({ name, email, phone, businessName, password: _password }) => {
@@ -116,6 +124,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    sessionStorage.removeItem('tapzyy_admin_session');
+    localStorage.removeItem('tapzyy_user');
     setUser(null);
   };
 
@@ -136,7 +146,6 @@ export const AuthProvider = ({ children }) => {
         login,
         adminLogin,
         loginDemoCustomer,
-        loginDemoAdmin,
         signup,
         logout,
         addSavedAddress

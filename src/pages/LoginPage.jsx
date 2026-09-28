@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, ShieldCheck, User, ArrowRight, Zap } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, Zap } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { useAuth } from '../context/AuthContext';
 
 export const LoginPage = () => {
-  const { login, loginDemoCustomer, loginDemoAdmin } = useAuth();
+  const { login, loginDemoCustomer } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -13,12 +13,8 @@ export const LoginPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const res = login(email, password);
-    if (res.role === 'admin') {
-      navigate('/admin-tap');
-    } else {
-      navigate('/account');
-    }
+    login(email, password);
+    navigate('/account');
   };
 
   const handleDemoCustomer = () => {
@@ -26,14 +22,9 @@ export const LoginPage = () => {
     navigate('/account');
   };
 
-  const handleDemoAdmin = () => {
-    loginDemoAdmin();
-    navigate('/admin-tap');
-  };
-
   return (
     <div style={{ paddingTop: '4.5rem', paddingBottom: '5.5rem', backgroundColor: '#FAF9F6', minHeight: '80vh' }}>
-      <SEOHead title="Login to Tapzyy Account" description="Sign in to your Tapzyy customer account or admin control panel." />
+      <SEOHead title="Login to Tapzyy Account" description="Sign in to your Tapzyy customer account." />
 
       <div className="container-narrow">
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
@@ -53,14 +44,11 @@ export const LoginPage = () => {
           textAlign: 'center'
         }}>
           <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--color-brand-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-            <Zap size={15} /> One-Click Demo Access
+            <Zap size={15} /> One-Click Customer Access
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={handleDemoCustomer} className="btn btn-secondary btn-sm" style={{ background: '#FFFFFF', gap: '0.4rem' }}>
               <User size={16} /> Demo Customer Login
-            </button>
-            <button onClick={handleDemoAdmin} className="btn btn-brand btn-sm" style={{ gap: '0.4rem' }}>
-              <ShieldCheck size={16} /> Demo Admin Portal
             </button>
           </div>
         </div>

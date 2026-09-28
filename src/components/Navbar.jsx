@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X, ShieldCheck, ChevronDown, ArrowRight, Package } from 'lucide-react';
+import { ShoppingBag, Menu, X, ChevronDown, ArrowRight, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { AnnouncementBar } from './AnnouncementBar';
 
 export const Navbar = () => {
@@ -10,7 +9,6 @@ export const Navbar = () => {
   const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { totalItemCount } = useCart();
-  const { user, isAdmin } = useAuth();
   const location = useLocation();
 
   const [prevPath, setPrevPath] = useState(location.pathname);
@@ -261,29 +259,6 @@ export const Navbar = () => {
 
           {/* Header Right Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-            {user && isAdmin && (
-              <Link
-                to="/admin-tap"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.5rem 0.9rem',
-                  borderRadius: 'var(--radius-full)',
-                  background: 'var(--color-brand-light)',
-                  border: '1px solid var(--color-line)',
-                  color: 'var(--color-brand-primary)',
-                  fontSize: '0.85rem',
-                  fontWeight: '700',
-                  transition: 'all 0.15s ease'
-                }}
-                title="Admin Dashboard"
-              >
-                <ShieldCheck size={18} color="var(--color-brand-primary)" />
-                <span className="account-text">Admin</span>
-              </Link>
-            )}
-
             {/* Cart Icon button */}
             <Link
               to="/cart"
@@ -547,28 +522,6 @@ export const Navbar = () => {
                 >
                   <ShoppingBag size={18} /> Get Your Tapzyy
                 </Link>
-
-                {user && isAdmin && (
-                  <Link
-                    to="/admin-tap"
-                    onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.4rem',
-                      padding: '0.65rem',
-                      borderRadius: 'var(--radius-full)',
-                      border: '1px solid var(--color-brand-primary)',
-                      fontSize: '0.85rem',
-                      fontWeight: '700',
-                      color: 'var(--color-brand-primary)'
-                    }}
-                  >
-                    <ShieldCheck size={16} />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                )}
               </div>
             </div>
           </>

@@ -22,14 +22,14 @@ import { useAdmin } from '../context/AdminContext';
 import { PRODUCTS } from '../data/products';
 
 export const AdminPage = () => {
-  const { user, isAdmin, adminLogin, loginDemoAdmin, logout } = useAuth();
+  const { user, isAdmin, adminLogin, logout } = useAuth();
   const { orders, updateOrderStatus, refreshOrders, dbStatus } = useOrders();
   const { siteContent, activeProducts, updateHeroContent, toggleProductActive, updateProduct, products } = useAdmin();
   const displayProducts = products || PRODUCTS;
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState('admin@tapzyy.com');
-  const [loginPassword, setLoginPassword] = useState('admin123');
+  // Login form state (empty by default for strict security)
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
   // Tab & Filters
@@ -62,6 +62,10 @@ export const AdminPage = () => {
   const handleAdminLoginSubmit = (e) => {
     e.preventDefault();
     setLoginError('');
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError('Both Admin ID and Password are required.');
+      return;
+    }
     const res = adminLogin(loginEmail, loginPassword);
     if (!res.success) {
       setLoginError(res.error || 'Invalid credentials');
@@ -80,7 +84,7 @@ export const AdminPage = () => {
 
           <h2 style={{ fontSize: '1.6rem', fontWeight: '800', textAlign: 'center', marginBottom: '0.4rem', color: 'var(--color-ink)' }}>Admin Control Portal</h2>
           <p style={{ fontSize: '0.88rem', color: 'var(--color-ink-soft)', textAlign: 'center', marginBottom: '1.75rem' }}>
-            Enter your authorized admin credentials to access live orders, Supabase store data, and product fulfillment.
+            Enter your authorized admin ID and password to access store management.
           </p>
 
           {loginError && (
@@ -90,27 +94,27 @@ export const AdminPage = () => {
             </div>
           )}
 
-          <form onSubmit={handleAdminLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+          <form onSubmit={handleAdminLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Admin Email</label>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Admin ID / Email</label>
               <input
-                type="email"
+                type="text"
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="admin@tapzyy.com"
+                placeholder="e.g. admin@tapzyy.com or jenishrakholiya2005@gmail.com"
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Password</label>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Admin Password</label>
               <input
                 type="password"
                 required
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="Enter password"
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
               />
             </div>
@@ -119,17 +123,6 @@ export const AdminPage = () => {
               Sign In to Admin Portal
             </button>
           </form>
-
-          <div style={{ borderTop: '1px solid var(--color-line)', paddingTop: '1.25rem', textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={loginDemoAdmin}
-              className="btn btn-secondary btn-full btn-sm"
-              style={{ fontWeight: '700', gap: '0.4rem' }}
-            >
-              <ShieldCheck size={16} /> Instant Demo Admin Login
-            </button>
-          </div>
         </div>
       </div>
     );

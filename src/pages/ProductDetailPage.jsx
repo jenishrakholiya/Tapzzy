@@ -5,11 +5,6 @@ import {
   ShieldCheck,
   Check,
   Truck,
-  Edit3,
-  X,
-  Plus,
-  Trash2,
-  RotateCcw,
   Zap,
   CheckCircle2,
   Sparkles
@@ -26,17 +21,12 @@ export const ProductDetailPage = ({ overrideSlug }) => {
   const currentSlug = overrideSlug || slug;
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { getProductBySlug, updateProduct, resetProducts, products } = useAdmin();
+  const { getProductBySlug, products } = useAdmin();
 
   const product = getProductBySlug(currentSlug);
 
   const [quantity, setQuantity] = useState(1);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
-
-  // Edit Modal State
-  const [isEditing, setIsEditing] = useState(false);
-  const [editFormData, setEditFormData] = useState(null);
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
 
   if (!product) {
     return (
@@ -47,47 +37,6 @@ export const ProductDetailPage = ({ overrideSlug }) => {
       </div>
     );
   }
-
-  const handleOpenEdit = () => {
-    setEditFormData({
-      name: product.name || '',
-      badge: product.badge || '',
-      price: product.price || 0,
-      originalPrice: product.originalPrice || 0,
-      shortDescription: product.shortDescription || '',
-      description: product.description || '',
-      image: product.image || '',
-      specifications: product.specifications ? product.specifications.map(s => ({ ...s })) : [],
-      features: product.features ? [...product.features] : [],
-      faqs: product.faqs ? product.faqs.map(f => ({ ...f })) : []
-    });
-    setIsEditing(true);
-  };
-
-  const handleSaveEdit = (e) => {
-    e.preventDefault();
-    if (!editFormData) return;
-
-    const savings = Math.max(0, (editFormData.originalPrice || 0) - (editFormData.price || 0));
-
-    updateProduct(product.id, {
-      name: editFormData.name,
-      badge: editFormData.badge,
-      price: Number(editFormData.price),
-      originalPrice: Number(editFormData.originalPrice),
-      savings,
-      shortDescription: editFormData.shortDescription,
-      description: editFormData.description,
-      image: editFormData.image,
-      specifications: editFormData.specifications,
-      features: editFormData.features,
-      faqs: editFormData.faqs
-    });
-
-    setIsEditing(false);
-    setSaveSuccessMsg(true);
-    setTimeout(() => setSaveSuccessMsg(false), 3000);
-  };
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -115,29 +64,11 @@ export const ProductDetailPage = ({ overrideSlug }) => {
     <div style={{ backgroundColor: '#FFFFFF', color: 'var(--color-ink)', position: 'relative' }}>
       <SEOHead pageKey={seoKey} title={`${product.name} — ₹${product.price.toLocaleString('en-IN')}`} description={product.shortDescription} />
 
-      {/* Top Banner & Breadcrumb / Admin bar */}
+      {/* Top Banner & Breadcrumb */}
       <div style={{ backgroundColor: 'var(--color-fog)', borderBottom: '1px solid var(--color-line)', padding: '0.75rem 0' }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)', fontWeight: '600' }}>
             <Link to="/" style={{ color: 'var(--color-ink-soft)' }}>Home</Link> / <Link to="/shop" style={{ color: 'var(--color-ink-soft)' }}>Shop</Link> / <span style={{ color: 'var(--color-ink)', fontWeight: '700' }}>{product.name}</span>
-          </div>
-
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button
-              onClick={handleOpenEdit}
-              className="btn btn-secondary btn-sm"
-              style={{ borderColor: 'var(--color-brand-primary)', color: 'var(--color-brand-primary)', fontWeight: '700', padding: '0.35rem 0.85rem' }}
-            >
-              <Edit3 size={15} /> Edit Product Details
-            </button>
-            <button
-              onClick={resetProducts}
-              className="btn btn-outline btn-sm"
-              title="Reset product data to defaults"
-              style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem' }}
-            >
-              <RotateCcw size={13} /> Reset
-            </button>
           </div>
         </div>
       </div>
@@ -578,186 +509,6 @@ export const ProductDetailPage = ({ overrideSlug }) => {
           {isGoogleCard ? 'Buy Google Card →' : isInstagramCard ? 'Buy Instagram Card →' : 'Buy Combo →'}
         </button>
       </div>
-
-      {/* EDIT PRODUCT MODAL (ADMIN) */}
-      {isEditing && editFormData && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(11, 18, 32, 0.75)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 1000,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '1.5rem'
-        }}>
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '24px',
-            maxWidth: '850px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '2rem',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            border: '1px solid var(--color-line)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-line)', paddingBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Edit3 color="var(--color-brand-primary)" size={22} />
-                <h2 style={{ fontSize: '1.4rem' }}>Edit Product Details: {product.name}</h2>
-              </div>
-              <button onClick={() => setIsEditing(false)} style={{ padding: '0.4rem', borderRadius: '50%', backgroundColor: 'var(--color-fog)' }}>
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Product Title</label>
-                  <input
-                    type="text"
-                    value={editFormData.name}
-                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Badge Label</label>
-                  <input
-                    type="text"
-                    value={editFormData.badge}
-                    onChange={(e) => setEditFormData({ ...editFormData, badge: e.target.value })}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Selling Price (₹)</label>
-                  <input
-                    type="number"
-                    value={editFormData.price}
-                    onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem' }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Original Price (₹)</label>
-                  <input
-                    type="number"
-                    value={editFormData.originalPrice}
-                    onChange={(e) => setEditFormData({ ...editFormData, originalPrice: e.target.value })}
-                    style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem' }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Main Image Path</label>
-                <input
-                  type="text"
-                  value={editFormData.image}
-                  onChange={(e) => setEditFormData({ ...editFormData, image: e.target.value })}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Short Description</label>
-                <input
-                  type="text"
-                  value={editFormData.shortDescription}
-                  onChange={(e) => setEditFormData({ ...editFormData, shortDescription: e.target.value })}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem' }}
-                />
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.4rem' }}>Full Description</label>
-                <textarea
-                  rows={3}
-                  value={editFormData.description}
-                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                  style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--color-line)', fontSize: '0.95rem', fontFamily: 'inherit' }}
-                />
-              </div>
-
-              {/* Technical Specifications Manager */}
-              <div style={{ marginBottom: '1.5rem', backgroundColor: 'var(--color-fog)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-line)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <h4 style={{ fontSize: '1rem', fontWeight: '800' }}>Technical Specifications ({editFormData.specifications.length})</h4>
-                  <button
-                    type="button"
-                    onClick={() => setEditFormData({
-                      ...editFormData,
-                      specifications: [...editFormData.specifications, { label: 'New Spec', value: 'Value' }]
-                    })}
-                    className="btn btn-secondary btn-sm"
-                    style={{ gap: '0.3rem', fontSize: '0.8rem' }}
-                  >
-                    <Plus size={14} /> Add Spec Row
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {editFormData.specifications.map((spec, idx) => (
-                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr auto', gap: '0.75rem', alignItems: 'center' }}>
-                      <input
-                        type="text"
-                        placeholder="Label"
-                        value={spec.label}
-                        onChange={(e) => {
-                          const updated = [...editFormData.specifications];
-                          updated[idx].label = e.target.value;
-                          setEditFormData({ ...editFormData, specifications: updated });
-                        }}
-                        style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-line)', fontSize: '0.88rem' }}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Value"
-                        value={spec.value}
-                        onChange={(e) => {
-                          const updated = [...editFormData.specifications];
-                          updated[idx].value = e.target.value;
-                          setEditFormData({ ...editFormData, specifications: updated });
-                        }}
-                        style={{ padding: '0.55rem', borderRadius: '6px', border: '1px solid var(--color-line)', fontSize: '0.88rem' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = editFormData.specifications.filter((_, i) => i !== idx);
-                          setEditFormData({ ...editFormData, specifications: updated });
-                        }}
-                        style={{ color: '#ef4444', padding: '0.4rem' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Form Action Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--color-line)' }}>
-                <button type="button" onClick={() => setIsEditing(false)} className="btn btn-secondary">
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-brand">
-                  Save Product Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       <style>{`
         @media (max-width: 768px) {
