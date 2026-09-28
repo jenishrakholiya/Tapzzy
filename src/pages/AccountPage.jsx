@@ -32,10 +32,10 @@ export const AccountPage = () => {
     );
   }
 
-  // Filter user orders
+  // Filter user orders safely
   const myOrders = orders.filter(o =>
-    o.customer.email.toLowerCase() === user.email.toLowerCase() ||
-    o.customer.phone === user.phone
+    ((o.customer?.email || '').toLowerCase() === (user.email || '').toLowerCase()) ||
+    (Boolean(o.customer?.phone) && Boolean(user.phone) && o.customer.phone === user.phone)
   );
 
   const handleSaveAddr = (e) => {
@@ -131,7 +131,7 @@ export const AccountPage = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    {ord.items.map((it, i) => (
+                    {(ord.items || []).map((it, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: 'var(--color-ink-soft)' }}>{it.name} × {it.quantity}</span>
                         <span style={{ fontWeight: '800', color: 'var(--color-ink)' }}>₹{(it.price * it.quantity).toLocaleString('en-IN')}</span>

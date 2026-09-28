@@ -250,8 +250,8 @@ export const CheckoutPage = () => {
   };
 
   // Payment success handler
-  const handlePaymentSuccess = (paymentResult) => {
-    const newOrder = createOrder({
+  const handlePaymentSuccess = async (paymentResult) => {
+    const newOrder = await createOrder({
       customer: {
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),

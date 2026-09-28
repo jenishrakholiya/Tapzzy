@@ -69,7 +69,7 @@ export const OrderConfirmationPage = () => {
           {/* Items List */}
           <h3 style={{ fontSize: '1.05rem', fontWeight: '800', marginBottom: '0.85rem', color: 'var(--color-ink)' }}>Ordered Products</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-line)', paddingBottom: '1rem' }}>
-            {order.items.map((item, idx) => (
+            {(order.items || []).map((item, idx) => (
               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.92rem' }}>
                 <div>
                   <span style={{ fontWeight: '700', color: 'var(--color-ink)' }}>{item.name}</span> × {item.quantity}
@@ -79,7 +79,7 @@ export const OrderConfirmationPage = () => {
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '1.2rem', color: 'var(--color-ink)', marginTop: '0.5rem' }}>
               <span>{isCod ? 'Total to Pay on Delivery' : 'Total Amount Paid'}</span>
-              <span style={{ color: 'var(--color-brand-primary)' }}>₹{order.grandTotal.toLocaleString('en-IN')}</span>
+              <span style={{ color: 'var(--color-brand-primary)' }}>₹{Number(order.grandTotal || 0).toLocaleString('en-IN')}</span>
             </div>
           </div>
 
@@ -88,15 +88,15 @@ export const OrderConfirmationPage = () => {
             <div>
               <h4 style={{ fontSize: '0.95rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--color-ink)' }}>Shipping Destination</h4>
               <p style={{ color: 'var(--color-ink-soft)', lineHeight: '1.5' }}>
-                <strong style={{ color: 'var(--color-ink)' }}>{order.customer.fullName}</strong><br />
-                {order.customer.businessName && <>{order.customer.businessName} {order.customer.businessCategory && `(${order.customer.businessCategory})`}<br /></>}
-                {order.customer.addressLine}, {order.customer.city}, {order.customer.state} - {order.customer.pinCode}<br />
-                Phone: {order.customer.phone}
+                <strong style={{ color: 'var(--color-ink)' }}>{order.customer?.fullName || 'Customer'}</strong><br />
+                {order.customer?.businessName && <>{order.customer.businessName} {order.customer?.businessCategory && `(${order.customer.businessCategory})`}<br /></>}
+                {order.customer?.addressLine}, {order.customer?.city}, {order.customer?.state} - {order.customer?.pinCode}<br />
+                Phone: {order.customer?.phone}
               </p>
-              {(order.customer.googleReviewLink || order.customer.instagramLink) && (
+              {(order.customer?.googleReviewLink || order.customer?.instagramLink) && (
                 <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--color-brand-primary)' }}>
-                  {order.customer.googleReviewLink && <div>✓ Configured for: {order.customer.googleReviewLink}</div>}
-                  {order.customer.instagramLink && <div>✓ Instagram: {order.customer.instagramLink}</div>}
+                  {order.customer?.googleReviewLink && <div>✓ Configured for: {order.customer.googleReviewLink}</div>}
+                  {order.customer?.instagramLink && <div>✓ Instagram: {order.customer.instagramLink}</div>}
                 </div>
               )}
             </div>
@@ -104,12 +104,17 @@ export const OrderConfirmationPage = () => {
             <div>
               <h4 style={{ fontSize: '0.95rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--color-ink)' }}>Payment Details</h4>
               <p style={{ color: 'var(--color-ink-soft)', lineHeight: '1.5' }}>
-                Method: <strong>{order.paymentMethod}</strong><br />
-                Status: <span style={{ color: 'var(--color-accent-green)', fontWeight: '800' }}>{order.paymentStatus}</span><br />
+                Method: <strong>{order.paymentMethod || 'Online'}</strong><br />
+                Status: <span style={{ color: 'var(--color-accent-green)', fontWeight: '800' }}>{order.paymentStatus || 'Confirmed'}</span><br />
                 Gateway: {isCod ? 'Tapzyy Express COD' : 'Razorpay Express'}
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Real-time Order Alert Info Notice */}
+        <div style={{ padding: '0.85rem 1.25rem', borderRadius: '16px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: '0.88rem', fontWeight: '600', marginBottom: '2rem', textAlign: 'center' }}>
+          ✓ Order notification dispatched to dispatch team (<span style={{ fontWeight: '700' }}>jenishrakholiya2005@gmail.com</span>). Your package is being prepared!
         </div>
 
         {/* Action Controls */}

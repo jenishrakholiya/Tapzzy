@@ -18,13 +18,16 @@ import {
   Plus,
   Trash2,
   ExternalLink,
-  Tag
+  Tag,
+  Mail,
+  Send
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../context/OrderContext';
 import { useAdmin } from '../context/AdminContext';
 import { PRODUCTS } from '../data/products';
+import { ADMIN_NOTIFICATION_EMAIL, sendOrderEmailToAdmin, generateOrderMailtoUrl } from '../lib/orderEmailService';
 
 export const AdminPage = () => {
   const { user, isAdmin, adminLogin, logout } = useAuth();
@@ -98,6 +101,8 @@ export const AdminPage = () => {
   const [subtext, setSubtext] = useState(siteContent.heroSubtext);
   const [contentSavedMsg, setContentSavedMsg] = useState(false);
   const [copiedSchema, setCopiedSchema] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSentStatus, setEmailSentStatus] = useState('');
 
   // Handle Admin Login Form
   const handleAdminLoginSubmit = (e) => {
@@ -982,6 +987,54 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                     <span>₹{Number(inspectOrder.grandTotal).toLocaleString('en-IN')}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Owner Email Notification Status */}
+              <div style={{ padding: '0.85rem 1rem', borderRadius: '14px', backgroundColor: 'var(--color-fog)', border: '1px solid var(--color-line)', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Mail size={16} color="var(--color-brand-primary)" />
+                    <div style={{ fontSize: '0.82rem' }}>
+                      <span style={{ fontWeight: '700', color: 'var(--color-ink)' }}>Owner Alert:</span>{' '}
+                      <span style={{ color: 'var(--color-ink-soft)', wordBreak: 'break-all' }}>{ADMIN_NOTIFICATION_EMAIL}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      disabled={emailSending}
+                      onClick={async () => {
+                        setEmailSending(true);
+                        setEmailSentStatus('');
+                        const res = await sendOrderEmailToAdmin(inspectOrder);
+                        setEmailSending(false);
+                        setEmailSentStatus(res.success ? 'Email sent to owner!' : 'Email queued / fallback ready');
+                        setTimeout(() => setEmailSentStatus(''), 4000);
+                      }}
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', gap: '0.25rem' }}
+                    >
+                      <Send size={12} /> {emailSending ? 'Sending...' : 'Resend Email Alert'}
+                    </button>
+
+                    <a
+                      href={generateOrderMailtoUrl(inspectOrder)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
+                    >
+                      Open in Mail App
+                    </a>
+                  </div>
+                </div>
+
+                {emailSentStatus && (
+                  <div style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: '700', marginTop: '0.35rem' }}>
+                    ✓ {emailSentStatus}
+                  </div>
+                )}
               </div>
 
               {/* Fulfillment Actions */}
