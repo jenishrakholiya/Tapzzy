@@ -297,6 +297,161 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
+.form-input.valid,
+.form-select.valid {
+  border-color: #10B981;
+  background-color: #F0FDF4;
+}
+
+.form-input.valid:focus,
+.form-select.valid:focus {
+  border-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.valid-label-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #059669;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: #ECFDF5;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid #A7F3D0;
+}
+
+/* Phone input with country code */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 12px;
+  transition: all 0.18s ease;
+  overflow: hidden;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: #0066FF;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
+}
+
+.phone-input-wrapper.error {
+  border-color: #EF4444;
+  background-color: #FEF2F2;
+}
+
+.phone-input-wrapper.valid {
+  border-color: #10B981;
+  background-color: #F0FDF4;
+}
+
+.phone-country-prefix {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  background-color: #F8FAFC;
+  border-right: 1.5px solid #E2E8F0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #334155;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.phone-field {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.92rem;
+  color: #0B1220;
+  box-shadow: none !important;
+}
+
+.phone-counter-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748B;
+  padding: 0 0.85rem;
+  user-select: none;
+}
+
+/* Instagram Handle Input Wrapper */
+.insta-input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.insta-prefix {
+  position: absolute;
+  left: 0.95rem;
+  font-weight: 800;
+  color: #E1306C;
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+.insta-field {
+  padding-left: 2rem !important;
+}
+
+/* Business GST Section */
+.gst-toggle-box {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+}
+
+.gst-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1E293B;
+  cursor: pointer;
+}
+
+.gst-toggle-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #0066FF;
+  cursor: pointer;
+}
+
+.gst-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #CBD5E1;
+}
+
+@media (max-width: 640px) {
+  .gst-fields-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
 .form-error {
   font-size: 0.78rem;
   color: #EF4444;

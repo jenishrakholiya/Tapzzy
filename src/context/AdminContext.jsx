@@ -47,13 +47,19 @@ export const AdminProvider = ({ children }) => {
     }
   });
 
-  // Fetch from Supabase on mount and listen to realtime updates
+  // Fetch from Supabase on mount and listen to realtime updates (admin routes only for WebSocket thrift)
   useEffect(() => {
     fetchProductsFromDb().then(({ products: remoteProducts, fromDb }) => {
       if (fromDb && remoteProducts && remoteProducts.length > 0) {
         setProducts(remoteProducts);
       }
     });
+
+    // Concurrency Protection: Only connect persistent WebSocket channel on admin sessions
+    const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin-tap');
+    if (!isAdminRoute) {
+      return;
+    }
 
     const unsubscribe = subscribeToRealtimeProducts((updatedRemoteProducts) => {
       if (updatedRemoteProducts && updatedRemoteProducts.length > 0) {

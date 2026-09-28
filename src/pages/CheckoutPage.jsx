@@ -78,7 +78,7 @@ export const CheckoutPage = () => {
     // Contact
     fullName: user?.name || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: user?.phone ? user.phone.replace(/\D/g, '').slice(-10) : '',
 
     // Business
     businessName: user?.businessName || '',
@@ -93,10 +93,17 @@ export const CheckoutPage = () => {
     state: user?.savedAddresses?.[0]?.state || 'Karnataka',
     pinCode: user?.savedAddresses?.[0]?.pinCode || '560001',
 
+    // Business GST invoice
+    hasGst: false,
+    gstNumber: '',
+    gstCompanyName: '',
+
     agreeTerms: true
   });
 
+  const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
+
   // Scroll to top when changing steps
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -137,83 +144,161 @@ export const CheckoutPage = () => {
     );
   }
 
+  // Single field validator
+  const validateField = (field, value, data = formData) => {
+    const val = typeof value === 'string' ? value.trim() : value;
+
+    switch (field) {
+      case 'fullName':
+        if (!val) return 'Full name is required';
+        if (val.length < 2) return 'Please enter your full name (minimum 2 characters)';
+        if (!/^[a-zA-Z\s.'-]+$/.test(val)) return 'Name should contain letters only';
+        return undefined;
+
+      case 'email':
+        if (!val) return 'Email address is required';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return 'Please enter a valid email address';
+        return undefined;
+
+      case 'phone': {
+        const clean = String(val || '').replace(/\D/g, '');
+        if (!clean) return 'Mobile phone number is required';
+        if (clean.length !== 10) return 'Please enter a valid 10-digit mobile number';
+        if (!/^[6-9]\d{9}$/.test(clean)) return 'Mobile number should start with 6, 7, 8, or 9';
+        return undefined;
+      }
+
+      case 'businessName':
+        if (!val) return 'Business or store name is required';
+        if (val.length < 2) return 'Please enter your business or shop name';
+        return undefined;
+
+      case 'businessCategory':
+        if (!val) return 'Please select a business category';
+        return undefined;
+
+      case 'googleReviewLink':
+        if (needsGoogleLink) {
+          if (!val) return 'Google Business link or shop name is required';
+          if (val.length < 3) return 'Please provide your Google Maps link or exact business name';
+        }
+        return undefined;
+
+      case 'instagramLink':
+        if (needsInstagramLink) {
+          if (!val) return 'Instagram handle or profile link is required';
+          if (val.length < 2) return 'Please enter your Instagram handle';
+        }
+        return undefined;
+
+      case 'houseBuilding':
+        if (!val) return 'House / Building / Shop No. is required';
+        if (val.length < 2) return 'Please provide building or premises details';
+        return undefined;
+
+      case 'areaLocality':
+        if (!val) return 'Area / Locality / Street / Landmark is required';
+        if (val.length < 3) return 'Please provide complete street or locality info';
+        return undefined;
+
+      case 'city':
+        if (!val) return 'City is required';
+        if (val.length < 2) return 'Please enter a valid city name';
+        return undefined;
+
+      case 'state':
+        if (!val) return 'Please select a state';
+        return undefined;
+
+      case 'pinCode': {
+        const pin = String(val || '').replace(/\D/g, '');
+        if (!pin) return '6-digit PIN code is required';
+        if (pin.length !== 6) return 'Please enter a valid 6-digit Indian PIN code';
+        return undefined;
+      }
+
+      case 'gstNumber':
+        if (data.hasGst) {
+          if (!val) return 'GSTIN is required for tax invoice';
+          if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(val)) {
+            return 'Invalid GSTIN format (e.g. 29AAAAA0000A1Z5)';
+          }
+        }
+        return undefined;
+
+      case 'agreeTerms':
+        if (!value) return 'You must agree to the Terms & Conditions to proceed';
+        return undefined;
+
+      default:
+        return undefined;
+    }
+  };
+
   // Field change handler
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for field once user starts typing
-    if (errors[field]) {
+    if (touched[field]) {
+      const updatedData = { ...formData, [field]: value };
+      const err = validateField(field, value, updatedData);
+      setErrors(prev => ({ ...prev, [field]: err }));
+    } else if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
-  // Validate Step 1 form fields
+  // Field blur handler
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const err = validateField(field, formData[field], formData);
+    setErrors(prev => ({ ...prev, [field]: err }));
+  };
+
+  // Dedicated sanitizers
+  const handlePhoneChange = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 10);
+    handleInputChange('phone', digits);
+  };
+
+  const handlePinCodeChange = (val) => {
+    const digits = val.replace(/\D/g, '').slice(0, 6);
+    handleInputChange('pinCode', digits);
+  };
+
+  const handleGstChange = (val) => {
+    const clean = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+    handleInputChange('gstNumber', clean);
+  };
+
+  // Validate entire form before advancing to review
   const validateForm = () => {
+    const fieldsToValidate = [
+      'fullName',
+      'email',
+      'phone',
+      'businessName',
+      'businessCategory',
+      'houseBuilding',
+      'areaLocality',
+      'city',
+      'state',
+      'pinCode',
+      'agreeTerms'
+    ];
+    if (needsGoogleLink) fieldsToValidate.push('googleReviewLink');
+    if (needsInstagramLink) fieldsToValidate.push('instagramLink');
+    if (formData.hasGst) fieldsToValidate.push('gstNumber');
+
     const newErrors = {};
+    const newTouched = {};
 
-    // Contact Details Validation
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
-    } else if (formData.fullName.trim().length < 2) {
-      newErrors.fullName = "Please enter your full name (minimum 2 characters)";
-    }
+    fieldsToValidate.forEach(field => {
+      newTouched[field] = true;
+      const err = validateField(field, formData[field], formData);
+      if (err) newErrors[field] = err;
+    });
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Email address is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    const cleanPhone = formData.phone.replace(/[\s\-+]/g, '');
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Mobile phone number is required";
-    } else if (!/^\d{10}$/.test(cleanPhone.replace(/^91/, '')) && !/^\d{10}$/.test(cleanPhone)) {
-      newErrors.phone = "Please enter a valid 10-digit mobile number";
-    }
-
-    // Business Details Validation
-    if (!formData.businessName.trim()) {
-      newErrors.businessName = "Business name is required";
-    }
-
-    if (!formData.businessCategory.trim()) {
-      newErrors.businessCategory = "Please select a business category";
-    }
-
-    if (needsGoogleLink && !formData.googleReviewLink.trim()) {
-      newErrors.googleReviewLink = "Google Business Profile or Review link is required";
-    }
-
-    if (needsInstagramLink && !formData.instagramLink.trim()) {
-      newErrors.instagramLink = "Instagram profile link or handle is required";
-    }
-
-    // Shipping Details Validation
-    if (!formData.houseBuilding.trim()) {
-      newErrors.houseBuilding = "House / Building details are required";
-    }
-
-    if (!formData.areaLocality.trim()) {
-      newErrors.areaLocality = "Area / Locality is required";
-    }
-
-    if (!formData.city.trim()) {
-      newErrors.city = "City is required";
-    }
-
-    if (!formData.state.trim()) {
-      newErrors.state = "Please select a state";
-    }
-
-    if (!formData.pinCode.trim()) {
-      newErrors.pinCode = "PIN Code is required";
-    } else if (!/^\d{6}$/.test(formData.pinCode.trim())) {
-      newErrors.pinCode = "Please enter a valid 6-digit PIN code";
-    }
-
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms = "You must agree to the Terms and Conditions to proceed";
-    }
-
+    setTouched(prev => ({ ...prev, ...newTouched }));
     setErrors(newErrors);
     return newErrors;
   };
@@ -226,7 +311,6 @@ export const CheckoutPage = () => {
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Find first error and scroll to it
       const errorKeys = Object.keys(newErrors);
       if (errorKeys.length > 0) {
         const el = document.getElementById(`field-${errorKeys[0]}`);
@@ -255,7 +339,7 @@ export const CheckoutPage = () => {
       customer: {
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),
-        phone: formData.phone.trim(),
+        phone: `+91 ${formData.phone.trim()}`,
         businessName: formData.businessName.trim(),
         businessCategory: formData.businessCategory,
         googleReviewLink: formData.googleReviewLink.trim(),
@@ -265,7 +349,9 @@ export const CheckoutPage = () => {
         addressLine: `${formData.houseBuilding.trim()}, ${formData.areaLocality.trim()}`,
         city: formData.city.trim(),
         state: formData.state,
-        pinCode: formData.pinCode.trim()
+        pinCode: formData.pinCode.trim(),
+        gstNumber: formData.hasGst ? formData.gstNumber.trim() : '',
+        gstCompanyName: formData.hasGst ? formData.gstCompanyName.trim() : ''
       },
       items: cart,
       subtotal,
@@ -361,92 +447,127 @@ export const CheckoutPage = () => {
 
               <div className="form-row-2">
                 <div className="form-group">
-                  <label htmlFor="field-fullName" className="form-label">
-                    Full Name <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-fullName" className="form-label">
+                      Full Name <span className="req">*</span>
+                    </label>
+                    {touched.fullName && !errors.fullName && formData.fullName.trim().length >= 2 && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Valid</span>
+                    )}
+                  </div>
                   <input
                     id="field-fullName"
                     type="text"
-                    className={`form-input ${errors.fullName ? 'error' : ''}`}
+                    className={`form-input ${touched.fullName && errors.fullName ? 'error' : ''} ${touched.fullName && !errors.fullName && formData.fullName.trim().length >= 2 ? 'valid' : ''}`}
                     placeholder="e.g. Rajesh Kumar"
                     value={formData.fullName}
                     onChange={(e) => handleInputChange('fullName', e.target.value)}
                     onBlur={() => handleBlur('fullName')}
                     autoComplete="name"
                   />
-                  {errors.fullName && <div className="form-error"><AlertCircle size={12} /> {errors.fullName}</div>}
+                  {touched.fullName && errors.fullName && <div className="form-error"><AlertCircle size={12} /> {errors.fullName}</div>}
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="field-email" className="form-label">
-                    Email Address <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-email" className="form-label">
+                      Email Address <span className="req">*</span>
+                    </label>
+                    {touched.email && !errors.email && formData.email && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Valid</span>
+                    )}
+                  </div>
                   <input
                     id="field-email"
                     type="email"
-                    className={`form-input ${errors.email ? 'error' : ''}`}
+                    className={`form-input ${touched.email && errors.email ? 'error' : ''} ${touched.email && !errors.email && formData.email ? 'valid' : ''}`}
                     placeholder="e.g. rajesh@business.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     onBlur={() => handleBlur('email')}
                     autoComplete="email"
                   />
-                  {errors.email && <div className="form-error"><AlertCircle size={12} /> {errors.email}</div>}
+                  {touched.email && errors.email ? (
+                    <div className="form-error"><AlertCircle size={12} /> {errors.email}</div>
+                  ) : (
+                    <div className="form-hint">Order confirmation & tracking details are delivered here.</div>
+                  )}
                 </div>
               </div>
 
               <div className="form-group">
-                <label htmlFor="field-phone" className="form-label">
-                  Phone Number <span className="req">*</span>
-                </label>
-                <div style={{ position: 'relative' }}>
+                <div className="form-label-row">
+                  <label htmlFor="field-phone" className="form-label">
+                    Mobile Phone Number <span className="req">*</span>
+                  </label>
+                  {touched.phone && !errors.phone && formData.phone.length === 10 && (
+                    <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> 10-Digit Verified</span>
+                  )}
+                </div>
+                <div className={`phone-input-wrapper ${touched.phone && errors.phone ? 'error' : ''} ${touched.phone && !errors.phone && formData.phone.length === 10 ? 'valid' : ''}`}>
+                  <div className="phone-country-prefix">
+                    <span>🇮🇳</span>
+                    <span>+91</span>
+                  </div>
                   <input
                     id="field-phone"
                     type="tel"
-                    className={`form-input ${errors.phone ? 'error' : ''}`}
-                    placeholder="10-digit mobile number (e.g. 9876543210)"
+                    inputMode="numeric"
+                    maxLength={10}
+                    className="phone-field"
+                    placeholder="10-digit mobile number"
                     value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     onBlur={() => handleBlur('phone')}
-                    autoComplete="tel"
+                    autoComplete="tel-national"
                   />
+                  {formData.phone && (
+                    <span className="phone-counter-badge">{formData.phone.length}/10</span>
+                  )}
                 </div>
-                {errors.phone ? (
+                {touched.phone && errors.phone ? (
                   <div className="form-error"><AlertCircle size={12} /> {errors.phone}</div>
                 ) : (
-                  <div className="form-hint">Used for express courier dispatch notifications and order verification.</div>
+                  <div className="form-hint">Used for courier delivery notifications and OTP verification at doorstep.</div>
                 )}
               </div>
 
               {/* SECTION: Business Details */}
               <div className="form-section-title">
-                <Building2 size={14} /> Business Details
+                <Building2 size={14} /> Business & NFC Setup
               </div>
 
               <div className="form-row-2">
                 <div className="form-group">
-                  <label htmlFor="field-businessName" className="form-label">
-                    Business / Store Name <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-businessName" className="form-label">
+                      Business / Store Name <span className="req">*</span>
+                    </label>
+                    {touched.businessName && !errors.businessName && formData.businessName.trim().length >= 2 && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Configured</span>
+                    )}
+                  </div>
                   <input
                     id="field-businessName"
                     type="text"
-                    className={`form-input ${errors.businessName ? 'error' : ''}`}
+                    className={`form-input ${touched.businessName && errors.businessName ? 'error' : ''} ${touched.businessName && !errors.businessName && formData.businessName.trim().length >= 2 ? 'valid' : ''}`}
                     placeholder="e.g. The Tiffin House Café"
                     value={formData.businessName}
                     onChange={(e) => handleInputChange('businessName', e.target.value)}
                     onBlur={() => handleBlur('businessName')}
                   />
-                  {errors.businessName && <div className="form-error"><AlertCircle size={12} /> {errors.businessName}</div>}
+                  {touched.businessName && errors.businessName && <div className="form-error"><AlertCircle size={12} /> {errors.businessName}</div>}
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="field-businessCategory" className="form-label">
-                    Business Category <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-businessCategory" className="form-label">
+                      Business Category <span className="req">*</span>
+                    </label>
+                  </div>
                   <select
                     id="field-businessCategory"
-                    className={`form-select ${errors.businessCategory ? 'error' : ''}`}
+                    className={`form-select ${touched.businessCategory && errors.businessCategory ? 'error' : ''}`}
                     value={formData.businessCategory}
                     onChange={(e) => handleInputChange('businessCategory', e.target.value)}
                     onBlur={() => handleBlur('businessCategory')}
@@ -455,30 +576,35 @@ export const CheckoutPage = () => {
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
-                  {errors.businessCategory && <div className="form-error"><AlertCircle size={12} /> {errors.businessCategory}</div>}
+                  {touched.businessCategory && errors.businessCategory && <div className="form-error"><AlertCircle size={12} /> {errors.businessCategory}</div>}
                 </div>
               </div>
 
               {/* Conditional: Google Business Link (only if Google Card or Combo) */}
               {needsGoogleLink && (
                 <div className="form-group">
-                  <label htmlFor="field-googleReviewLink" className="form-label">
-                    Google Business Profile / Review Link <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-googleReviewLink" className="form-label">
+                      Google Business Profile or Review Link <span className="req">*</span>
+                    </label>
+                    {touched.googleReviewLink && !errors.googleReviewLink && formData.googleReviewLink.trim().length >= 3 && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Configured</span>
+                    )}
+                  </div>
                   <input
                     id="field-googleReviewLink"
                     type="text"
-                    className={`form-input ${errors.googleReviewLink ? 'error' : ''}`}
+                    className={`form-input ${touched.googleReviewLink && errors.googleReviewLink ? 'error' : ''} ${touched.googleReviewLink && !errors.googleReviewLink && formData.googleReviewLink.trim().length >= 3 ? 'valid' : ''}`}
                     placeholder="e.g. https://g.page/r/... or full business name on Google Maps"
                     value={formData.googleReviewLink}
                     onChange={(e) => handleInputChange('googleReviewLink', e.target.value)}
                     onBlur={() => handleBlur('googleReviewLink')}
                   />
-                  {errors.googleReviewLink ? (
+                  {touched.googleReviewLink && errors.googleReviewLink ? (
                     <div className="form-error"><AlertCircle size={12} /> {errors.googleReviewLink}</div>
                   ) : (
                     <div className="form-hint">
-                      This link will be encoded onto your NFC chip and laser-printed as a QR code.
+                      💡 <strong>Tip:</strong> Enter your Google Maps link or exact shop name. Our technicians encode and laser-test your NFC chip before shipping.
                     </div>
                   )}
                 </div>
@@ -487,23 +613,31 @@ export const CheckoutPage = () => {
               {/* Conditional: Instagram Profile Link (only if Instagram Card or Combo) */}
               {needsInstagramLink && (
                 <div className="form-group">
-                  <label htmlFor="field-instagramLink" className="form-label">
-                    Instagram Profile Link <span className="req">*</span>
-                  </label>
-                  <input
-                    id="field-instagramLink"
-                    type="text"
-                    className={`form-input ${errors.instagramLink ? 'error' : ''}`}
-                    placeholder="e.g. @yourbusiness or instagram.com/yourbusiness"
-                    value={formData.instagramLink}
-                    onChange={(e) => handleInputChange('instagramLink', e.target.value)}
-                    onBlur={() => handleBlur('instagramLink')}
-                  />
-                  {errors.instagramLink ? (
+                  <div className="form-label-row">
+                    <label htmlFor="field-instagramLink" className="form-label">
+                      Instagram Profile Handle or Link <span className="req">*</span>
+                    </label>
+                    {touched.instagramLink && !errors.instagramLink && formData.instagramLink.trim().length >= 2 && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Configured</span>
+                    )}
+                  </div>
+                  <div className="insta-input-wrapper">
+                    <span className="insta-prefix">@</span>
+                    <input
+                      id="field-instagramLink"
+                      type="text"
+                      className={`form-input insta-field ${touched.instagramLink && errors.instagramLink ? 'error' : ''} ${touched.instagramLink && !errors.instagramLink && formData.instagramLink.trim().length >= 2 ? 'valid' : ''}`}
+                      placeholder="yourbusiness or instagram.com/yourbusiness"
+                      value={formData.instagramLink.replace(/^@/, '')}
+                      onChange={(e) => handleInputChange('instagramLink', e.target.value)}
+                      onBlur={() => handleBlur('instagramLink')}
+                    />
+                  </div>
+                  {touched.instagramLink && errors.instagramLink ? (
                     <div className="form-error"><AlertCircle size={12} /> {errors.instagramLink}</div>
                   ) : (
                     <div className="form-hint">
-                      Your business Instagram handle to direct in-store customers to your feed.
+                      Instantly opens your Instagram profile when patrons tap your acrylic stand.
                     </div>
                   )}
                 </div>
@@ -511,56 +645,71 @@ export const CheckoutPage = () => {
 
               {/* SECTION: Shipping Details */}
               <div className="form-section-title">
-                <MapPin size={14} /> Shipping Details
+                <MapPin size={14} /> Pan-India Shipping Address
               </div>
 
               <div className="form-group">
-                <label htmlFor="field-houseBuilding" className="form-label">
-                  House / Building / Shop No. <span className="req">*</span>
-                </label>
+                <div className="form-label-row">
+                  <label htmlFor="field-houseBuilding" className="form-label">
+                    House / Flat / Building / Shop No. <span className="req">*</span>
+                  </label>
+                  {touched.houseBuilding && !errors.houseBuilding && formData.houseBuilding.trim().length >= 2 && (
+                    <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Valid</span>
+                  )}
+                </div>
                 <input
                   id="field-houseBuilding"
                   type="text"
-                  className={`form-input ${errors.houseBuilding ? 'error' : ''}`}
-                  placeholder="e.g. Flat 302, Green Valley Apartments or Shop #14"
+                  className={`form-input ${touched.houseBuilding && errors.houseBuilding ? 'error' : ''} ${touched.houseBuilding && !errors.houseBuilding && formData.houseBuilding.trim().length >= 2 ? 'valid' : ''}`}
+                  placeholder="e.g. Shop #14, Ground Floor or Flat 302, Green Valley Apts"
                   value={formData.houseBuilding}
                   onChange={(e) => handleInputChange('houseBuilding', e.target.value)}
                   onBlur={() => handleBlur('houseBuilding')}
                 />
-                {errors.houseBuilding && <div className="form-error"><AlertCircle size={12} /> {errors.houseBuilding}</div>}
+                {touched.houseBuilding && errors.houseBuilding && <div className="form-error"><AlertCircle size={12} /> {errors.houseBuilding}</div>}
               </div>
 
               <div className="form-group">
-                <label htmlFor="field-areaLocality" className="form-label">
-                  Area / Locality / Street / Landmark <span className="req">*</span>
-                </label>
+                <div className="form-label-row">
+                  <label htmlFor="field-areaLocality" className="form-label">
+                    Area / Locality / Street / Landmark <span className="req">*</span>
+                  </label>
+                  {touched.areaLocality && !errors.areaLocality && formData.areaLocality.trim().length >= 3 && (
+                    <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Valid</span>
+                  )}
+                </div>
                 <input
                   id="field-areaLocality"
                   type="text"
-                  className={`form-input ${errors.areaLocality ? 'error' : ''}`}
+                  className={`form-input ${touched.areaLocality && errors.areaLocality ? 'error' : ''} ${touched.areaLocality && !errors.areaLocality && formData.areaLocality.trim().length >= 3 ? 'valid' : ''}`}
                   placeholder="e.g. 100 Feet Road, Indiranagar, Opp. Metro Pillar 42"
                   value={formData.areaLocality}
                   onChange={(e) => handleInputChange('areaLocality', e.target.value)}
                   onBlur={() => handleBlur('areaLocality')}
                 />
-                {errors.areaLocality && <div className="form-error"><AlertCircle size={12} /> {errors.areaLocality}</div>}
+                {touched.areaLocality && errors.areaLocality && <div className="form-error"><AlertCircle size={12} /> {errors.areaLocality}</div>}
               </div>
 
               <div className="form-row-3">
                 <div className="form-group">
-                  <label htmlFor="field-city" className="form-label">
-                    City <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-city" className="form-label">
+                      City <span className="req">*</span>
+                    </label>
+                    {touched.city && !errors.city && formData.city.trim().length >= 2 && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Valid</span>
+                    )}
+                  </div>
                   <input
                     id="field-city"
                     type="text"
-                    className={`form-input ${errors.city ? 'error' : ''}`}
+                    className={`form-input ${touched.city && errors.city ? 'error' : ''} ${touched.city && !errors.city && formData.city.trim().length >= 2 ? 'valid' : ''}`}
                     placeholder="e.g. Bengaluru"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
                     onBlur={() => handleBlur('city')}
                   />
-                  {errors.city && <div className="form-error"><AlertCircle size={12} /> {errors.city}</div>}
+                  {touched.city && errors.city && <div className="form-error"><AlertCircle size={12} /> {errors.city}</div>}
                 </div>
 
                 <div className="form-group">
@@ -569,7 +718,7 @@ export const CheckoutPage = () => {
                   </label>
                   <select
                     id="field-state"
-                    className={`form-select ${errors.state ? 'error' : ''}`}
+                    className={`form-select ${touched.state && errors.state ? 'error' : ''}`}
                     value={formData.state}
                     onChange={(e) => handleInputChange('state', e.target.value)}
                     onBlur={() => handleBlur('state')}
@@ -578,25 +727,72 @@ export const CheckoutPage = () => {
                       <option key={st} value={st}>{st}</option>
                     ))}
                   </select>
-                  {errors.state && <div className="form-error"><AlertCircle size={12} /> {errors.state}</div>}
+                  {touched.state && errors.state && <div className="form-error"><AlertCircle size={12} /> {errors.state}</div>}
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="field-pinCode" className="form-label">
-                    PIN Code <span className="req">*</span>
-                  </label>
+                  <div className="form-label-row">
+                    <label htmlFor="field-pinCode" className="form-label">
+                      PIN Code <span className="req">*</span>
+                    </label>
+                    {touched.pinCode && !errors.pinCode && formData.pinCode.length === 6 && (
+                      <span className="valid-label-badge"><CheckCircle2 size={13} color="#10B981" /> Valid PIN</span>
+                    )}
+                  </div>
                   <input
                     id="field-pinCode"
                     type="text"
+                    inputMode="numeric"
                     maxLength={6}
-                    className={`form-input ${errors.pinCode ? 'error' : ''}`}
+                    className={`form-input ${touched.pinCode && errors.pinCode ? 'error' : ''} ${touched.pinCode && !errors.pinCode && formData.pinCode.length === 6 ? 'valid' : ''}`}
                     placeholder="6 digits (e.g. 560001)"
                     value={formData.pinCode}
-                    onChange={(e) => handleInputChange('pinCode', e.target.value)}
+                    onChange={(e) => handlePinCodeChange(e.target.value)}
                     onBlur={() => handleBlur('pinCode')}
                   />
-                  {errors.pinCode && <div className="form-error"><AlertCircle size={12} /> {errors.pinCode}</div>}
+                  {touched.pinCode && errors.pinCode && <div className="form-error"><AlertCircle size={12} /> {errors.pinCode}</div>}
                 </div>
+              </div>
+
+              {/* Optional Business GST Invoice Box */}
+              <div className="gst-toggle-box">
+                <label className="gst-toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasGst}
+                    onChange={(e) => handleInputChange('hasGst', e.target.checked)}
+                  />
+                  <span>Add Business GSTIN for Official Tax Invoice (Optional)</span>
+                </label>
+                {formData.hasGst && (
+                  <div className="gst-fields-grid">
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">GSTIN (15 Digits)</label>
+                      <input
+                        type="text"
+                        maxLength={15}
+                        className={`form-input ${touched.gstNumber && errors.gstNumber ? 'error' : ''} ${touched.gstNumber && !errors.gstNumber && formData.gstNumber.length === 15 ? 'valid' : ''}`}
+                        placeholder="e.g. 29AAAAA0000A1Z5"
+                        value={formData.gstNumber}
+                        onChange={(e) => handleGstChange(e.target.value)}
+                        onBlur={() => handleBlur('gstNumber')}
+                      />
+                      {touched.gstNumber && errors.gstNumber && (
+                        <div className="form-error"><AlertCircle size={12} /> {errors.gstNumber}</div>
+                      )}
+                    </div>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label">Registered Legal Name</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Company name as registered on GST"
+                        value={formData.gstCompanyName}
+                        onChange={(e) => handleInputChange('gstCompanyName', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Terms Checkbox */}
@@ -615,7 +811,7 @@ export const CheckoutPage = () => {
                     <Link to="/privacy-policy" target="_blank" style={{ color: '#0066FF', fontWeight: '700' }}>Privacy Policy</Link>.
                   </span>
                 </label>
-                {errors.agreeTerms && <div className="form-error"><AlertCircle size={12} /> {errors.agreeTerms}</div>}
+                {touched.agreeTerms && errors.agreeTerms && <div className="form-error"><AlertCircle size={12} /> {errors.agreeTerms}</div>}
               </div>
 
               {/* Submit Button */}
@@ -910,6 +1106,23 @@ export const CheckoutPage = () => {
                     Country: India
                   </div>
                 </div>
+
+                {/* GST Invoice Tile (if provided) */}
+                {formData.hasGst && formData.gstNumber && (
+                  <div className="review-detail-tile">
+                    <div className="review-detail-heading">
+                      <Building2 size={13} /> GST Tax Invoice
+                    </div>
+                    <div className="review-detail-line">
+                      <strong>GSTIN:</strong> {formData.gstNumber}
+                    </div>
+                    {formData.gstCompanyName && (
+                      <div className="review-detail-line">
+                        <strong>Entity:</strong> {formData.gstCompanyName}
+                      </div>
+                    )}
+                  </div>
+                )}
 
               </div>
 

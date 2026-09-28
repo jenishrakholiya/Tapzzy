@@ -93,6 +93,11 @@ export const OrderConfirmationPage = () => {
                 {order.customer?.addressLine}, {order.customer?.city}, {order.customer?.state} - {order.customer?.pinCode}<br />
                 Phone: {order.customer?.phone}
               </p>
+              {order.customer?.gstNumber && (
+                <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: '#1E293B', background: '#F1F5F9', padding: '0.35rem 0.65rem', borderRadius: '6px', display: 'inline-block' }}>
+                  GSTIN: <strong>{order.customer.gstNumber}</strong> {order.customer.gstCompanyName ? `(${order.customer.gstCompanyName})` : ''}
+                </div>
+              )}
               {(order.customer?.googleReviewLink || order.customer?.instagramLink) && (
                 <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--color-brand-primary)' }}>
                   {order.customer?.googleReviewLink && <div>✓ Configured for: {order.customer.googleReviewLink}</div>}

@@ -70,6 +70,7 @@ export const AdminPage = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [productActionMsg, setProductActionMsg] = useState('');
+  const [productFormError, setProductFormError] = useState('');
 
   const [newProductData, setNewProductData] = useState({
     name: '',
@@ -214,7 +215,24 @@ export const AdminPage = () => {
   // Product Creation Submit
   const handleCreateProductSubmit = async (e) => {
     e.preventDefault();
-    if (!newProductData.name.trim()) return;
+    setProductFormError('');
+
+    if (!newProductData.name.trim() || newProductData.name.trim().length < 3) {
+      setProductFormError('Product title must be at least 3 characters long.');
+      return;
+    }
+
+    const price = Number(newProductData.price);
+    if (isNaN(price) || price <= 0) {
+      setProductFormError('Please enter a valid selling price greater than ₹0.');
+      return;
+    }
+
+    const mrp = Number(newProductData.originalPrice || price);
+    if (mrp < price) {
+      setProductFormError('Original MRP must be greater than or equal to the Selling Price.');
+      return;
+    }
 
     const features = newProductData.featuresText
       .split('\n')
@@ -230,8 +248,8 @@ export const AdminPage = () => {
       slug: generatedSlug,
       category: newProductData.category || 'NFC Standee',
       badge: newProductData.badge.trim(),
-      price: Number(newProductData.price),
-      originalPrice: Number(newProductData.originalPrice || newProductData.price),
+      price: price,
+      originalPrice: mrp,
       image: newProductData.image || '/assets/google.png',
       shortDescription: newProductData.shortDescription || `${newProductData.name} with instant contactless NFC and QR scan connectivity.`,
       description: newProductData.description || `Enhance your business visibility with ${newProductData.name}. Designed for high-footfall checkout counters and reception desks.`,
@@ -240,6 +258,7 @@ export const AdminPage = () => {
     });
 
     setIsAddingProduct(false);
+    setProductFormError('');
     setNewProductData({
       name: '',
       slug: '',
@@ -260,6 +279,25 @@ export const AdminPage = () => {
   // Full Product Edit Submit
   const handleProductEditSubmit = async (e) => {
     e.preventDefault();
+    setProductFormError('');
+
+    if (!productFormData.name.trim() || productFormData.name.trim().length < 3) {
+      setProductFormError('Product title must be at least 3 characters long.');
+      return;
+    }
+
+    const price = Number(productFormData.price);
+    if (isNaN(price) || price <= 0) {
+      setProductFormError('Selling price must be greater than ₹0.');
+      return;
+    }
+
+    const mrp = Number(productFormData.originalPrice || price);
+    if (mrp < price) {
+      setProductFormError('Original MRP must be greater than or equal to the Selling Price.');
+      return;
+    }
+
     if (editingProduct) {
       const updatedSlug = (productFormData.slug && productFormData.slug.trim())
         ? productFormData.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
@@ -269,14 +307,15 @@ export const AdminPage = () => {
         name: productFormData.name,
         slug: updatedSlug,
         category: productFormData.category || editingProduct.category,
-        price: Number(productFormData.price),
-        originalPrice: Number(productFormData.originalPrice),
+        price: price,
+        originalPrice: mrp,
         badge: productFormData.badge,
         image: productFormData.image,
         shortDescription: productFormData.shortDescription,
         description: productFormData.description
       });
       setEditingProduct(null);
+      setProductFormError('');
       setProductActionMsg('Product details successfully updated in database & storefront!');
       setTimeout(() => setProductActionMsg(''), 4500);
     }
@@ -1082,6 +1121,12 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
               </div>
 
               <form onSubmit={handleCreateProductSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {productFormError && (
+                  <div style={{ padding: '0.65rem 0.85rem', borderRadius: '10px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{productFormError}</span>
+                  </div>
+                )}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Product Title *</label>
                   <input
@@ -1251,6 +1296,12 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
               </div>
 
               <form onSubmit={handleProductEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {productFormError && (
+                  <div style={{ padding: '0.65rem 0.85rem', borderRadius: '10px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span>{productFormError}</span>
+                  </div>
+                )}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Product Title</label>
                   <input

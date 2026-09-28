@@ -117,6 +117,17 @@ export const OrderProvider = ({ children }) => {
   useEffect(() => {
     loadOrdersFromDb();
 
+    // High Concurrency / Free Tier Protection:
+    // Only open Realtime WebSocket for orders if on the admin dashboard or admin session is active.
+    // Regular shoppers browsing the catalog do NOT open order websocket channels, preventing quota exhaustion.
+    const isAdminActive = 
+      typeof window !== 'undefined' && 
+      (window.location.pathname.includes('/admin-tap') || sessionStorage.getItem('tapzyy_admin_auth'));
+
+    if (!isAdminActive) {
+      return;
+    }
+
     const unsubscribe = subscribeToRealtimeOrders(
       (newRemoteOrder) => {
         setOrders((prev) => {
@@ -132,7 +143,7 @@ export const OrderProvider = ({ children }) => {
     );
 
     return () => {
-      unsubscribe();
+      if (unsubscribe) unsubscribe();
     };
   }, []);
 

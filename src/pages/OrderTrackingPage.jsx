@@ -25,13 +25,21 @@ export const OrderTrackingPage = () => {
     e.preventDefault();
     setSearchedError(null);
 
+    const cleanOrderId = orderIdInput.trim().replace(/^#/, '');
+    const cleanContact = contactInput.trim();
+
+    if (!cleanOrderId && !cleanContact) {
+      setSearchedError("Please enter your Order ID (e.g. TPZ-84920) or your registered 10-digit mobile number / email address to track your package.");
+      return;
+    }
+
     let result = null;
-    if (orderIdInput.trim()) {
-      result = getOrderById(orderIdInput);
+    if (cleanOrderId) {
+      result = getOrderById(cleanOrderId);
     }
     
-    if (!result && contactInput.trim()) {
-      const list = findOrdersByCustomer(contactInput);
+    if (!result && cleanContact) {
+      const list = findOrdersByCustomer(cleanContact);
       if (list.length > 0) {
         result = list[0];
       }
@@ -41,7 +49,7 @@ export const OrderTrackingPage = () => {
       setSearchedOrder(result);
     } else {
       setSearchedOrder(null);
-      setSearchedError("No order found matching the provided Order ID or contact details. Try sample Order ID: TPZ-84920");
+      setSearchedError(`No order found matching "${cleanOrderId || cleanContact}". Please verify the details or try sample Order ID: TPZ-84920`);
     }
   };
 
