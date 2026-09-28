@@ -99,53 +99,125 @@ export async function fetchOrders() {
     }
   }
 
-  return { orders: [], fromDb: false };
+  // Default initial mock orders if completely empty
+  const defaultOrders = [
+    {
+      id: "TPZ-84920",
+      createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString(),
+      customer: {
+        fullName: "Rajesh Kumar",
+        email: "rajesh@tiffinhouse.com",
+        phone: "+91 98765 43210",
+        businessName: "The Tiffin House Café",
+        addressLine: "Shop #4, MG Road",
+        city: "Bengaluru",
+        state: "Karnataka",
+        pinCode: "560001"
+      },
+      items: [
+        { id: "combo", name: "Tapzyy Google + Instagram Combo", price: 2999, quantity: 1, image: "/assets/combo.png" }
+      ],
+      subtotal: 2999,
+      discount: 0,
+      shippingFee: 0,
+      grandTotal: 2999,
+      paymentMethod: "UPI (Google Pay)",
+      paymentStatus: "Paid",
+      orderStatus: "Shipped",
+      trackingNumber: "DTDC-BLR-984210",
+      courierPartner: "DTDC Express",
+      estimatedDelivery: "3-5 Business Days",
+      history: [
+        { status: "Order Placed", timestamp: new Date(Date.now() - 3600000 * 72).toISOString(), note: "Order placed via website." },
+        { status: "Packed", timestamp: new Date(Date.now() - 3600000 * 48).toISOString(), note: "Packed in premium acrylic protective box." },
+        { status: "Shipped", timestamp: new Date(Date.now() - 3600000 * 24).toISOString(), note: "Handed over to DTDC Express courier." }
+      ]
+    },
+    {
+      id: "TPZ-71034",
+      createdAt: new Date(Date.now() - 3600000 * 24 * 5).toISOString(),
+      customer: {
+        fullName: "Priya Sharma",
+        email: "priya@glitzsalon.in",
+        phone: "+91 98111 22334",
+        businessName: "Glitz Beauty Salon",
+        addressLine: "22, Commerce House, Link Road",
+        city: "Mumbai",
+        state: "Maharashtra",
+        pinCode: "400053"
+      },
+      items: [
+        { id: "instagram-card", name: "Tapzyy Instagram NFC Card", price: 1999, quantity: 1, image: "/assets/instagram.png" }
+      ],
+      subtotal: 1999,
+      discount: 0,
+      shippingFee: 0,
+      grandTotal: 1999,
+      paymentMethod: "Credit Card (HDFC)",
+      paymentStatus: "Paid",
+      orderStatus: "Delivered",
+      trackingNumber: "BLUEDART-BOM-5542",
+      courierPartner: "BlueDart Express",
+      estimatedDelivery: "Delivered",
+      history: [
+        { status: "Order Placed", timestamp: new Date(Date.now() - 3600000 * 120).toISOString(), note: "Order placed successfully." },
+        { status: "Delivered", timestamp: new Date(Date.now() - 3600000 * 40).toISOString(), note: "Delivered to recipient." }
+      ]
+    }
+  ];
+
+  localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(defaultOrders));
+  return { orders: defaultOrders, fromDb: false };
 }
 
 /**
- * Save / create order in Supabase with offline cache fallback
+ * Create a new order in Supabase & local cache
  */
 export async function createOrderInDb(newOrder) {
-  // Update local cache immediately
+  // Save to local cache first
   try {
     const cached = localStorage.getItem(ORDERS_CACHE_KEY);
-    const existing = cached ? JSON.parse(cached) : [];
-    localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify([newOrder, ...existing.filter(o => o.id !== newOrder.id)]));
+    const orders = cached ? JSON.parse(cached) : [];
+    const updated = [newOrder, ...orders.filter(o => o.id !== newOrder.id)];
+    localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(updated));
   } catch (e) {
-    console.error('Failed to update local cache', e);
+    console.error('Failed to save order to local cache', e);
   }
 
-  // Sync to Supabase
+  // Attempt Supabase Insert
   try {
     const dbPayload = toDbOrderFormat(newOrder);
-    const { data, error } = await supabase
-      .from('orders')
-      .upsert(dbPayload, { onConflict: 'id' })
-      .select();
-
+    const { error } = await supabase.from('orders').insert([dbPayload]);
     if (error) {
-      console.warn('Supabase order creation returned error:', error.message);
+      console.warn('Supabase insert order error, stored in local cache:', error.message);
       return { success: false, error: error.message };
     }
-    return { success: true, data };
+    return { success: true };
   } catch (err) {
-    console.warn('Supabase order insert failed:', err.message);
+    console.warn('Supabase offline / insert failed:', err.message);
     return { success: false, error: err.message };
   }
 }
 
 /**
- * Update order status, tracking, and history in Supabase
+ * Update an existing order status / tracking info
  */
 export async function updateOrderInDb(orderId, updateFields) {
   // Update local cache
   try {
     const cached = localStorage.getItem(ORDERS_CACHE_KEY);
-    if (cached) {
-      const orders = JSON.parse(cached);
-      const updated = orders.map(o => (o.id === orderId ? { ...o, ...updateFields } : o));
-      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(updated));
-    }
+    const orders = cached ? JSON.parse(cached) : [];
+    const updated = orders.map(ord => {
+      if (ord.id === orderId) {
+        return {
+          ...ord,
+          ...updateFields,
+          history: updateFields.history || ord.history
+        };
+      }
+      return ord;
+    });
+    localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(updated));
   } catch (e) {
     console.error('Failed to update local cache', e);
   }
@@ -194,8 +266,9 @@ export async function fetchProductsFromDb() {
         badge: p.badge || '',
         price: Number(p.price),
         originalPrice: Number(p.original_price),
+        savings: Math.max(0, Number(p.original_price) - Number(p.price)),
         image: p.image,
-        gallery: p.gallery || [],
+        gallery: p.gallery && p.gallery.length > 0 ? p.gallery : [p.image],
         shortDescription: p.short_description || '',
         description: p.description || '',
         features: p.features || [],
@@ -214,13 +287,60 @@ export async function fetchProductsFromDb() {
   const cached = localStorage.getItem(PRODUCTS_CACHE_KEY);
   if (cached) {
     try {
-      return { products: JSON.parse(cached), fromDb: false };
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return { products: parsed, fromDb: false };
+      }
     } catch {
       // ignore
     }
   }
 
   return { products: DEFAULT_PRODUCTS, fromDb: false };
+}
+
+/**
+ * Create a brand new product in Supabase & local cache
+ */
+export async function createProductInDb(product) {
+  // Update local cache
+  try {
+    const cached = localStorage.getItem(PRODUCTS_CACHE_KEY);
+    const products = cached ? JSON.parse(cached) : DEFAULT_PRODUCTS;
+    const updated = [product, ...products.filter(p => p.id !== product.id)];
+    localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.error('Failed to update local product cache', e);
+  }
+
+  // Sync to Supabase
+  try {
+    const payload = {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      badge: product.badge || '',
+      price: Number(product.price),
+      original_price: Number(product.originalPrice || product.price),
+      image: product.image || '/assets/google.png',
+      gallery: product.gallery || [product.image || '/assets/google.png'],
+      short_description: product.shortDescription || '',
+      description: product.description || '',
+      features: product.features || [],
+      specifications: product.specifications || [],
+      is_active: product.isActive !== false,
+      is_combo: Boolean(product.isCombo)
+    };
+
+    const { error } = await supabase.from('products').insert([payload]);
+    if (error) {
+      console.warn('Supabase createProduct error:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 /**
@@ -249,6 +369,7 @@ export async function updateProductInDb(productId, updateFields) {
     if (updateFields.isActive !== undefined) payload.is_active = updateFields.isActive;
     if (updateFields.image !== undefined) payload.image = updateFields.image;
     if (updateFields.shortDescription !== undefined) payload.short_description = updateFields.shortDescription;
+    if (updateFields.description !== undefined) payload.description = updateFields.description;
 
     const { error } = await supabase
       .from('products')
@@ -261,5 +382,99 @@ export async function updateProductInDb(productId, updateFields) {
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Delete a product from Supabase & local cache
+ */
+export async function deleteProductFromDb(productId) {
+  // Update local cache
+  try {
+    const cached = localStorage.getItem(PRODUCTS_CACHE_KEY);
+    if (cached) {
+      const products = JSON.parse(cached);
+      const filtered = products.filter(p => p.id !== productId);
+      localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(filtered));
+    }
+  } catch (e) {
+    console.error('Failed to delete from local product cache', e);
+  }
+
+  // Delete from Supabase
+  try {
+    const { error } = await supabase.from('products').delete().eq('id', productId);
+    if (error) {
+      console.warn('Supabase deleteProduct error:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Real-time order synchronization listener
+ */
+export function subscribeToRealtimeOrders(onInsert, onUpdate) {
+  try {
+    const channel = supabase
+      .channel('realtime_orders_subscription')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (payload?.new) {
+            const normalized = normalizeOrderFromDb(payload.new);
+            if (onInsert) onInsert(normalized);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (payload?.new) {
+            const normalized = normalizeOrderFromDb(payload.new);
+            if (onUpdate) onUpdate(normalized);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('Realtime subscription not supported or failed:', err);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time product synchronization listener
+ */
+export function subscribeToRealtimeProducts(onChange) {
+  try {
+    const channel = supabase
+      .channel('realtime_products_subscription')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          fetchProductsFromDb().then(({ products }) => {
+            if (onChange && products) onChange(products);
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (err) {
+    console.warn('Realtime product subscription failed:', err);
+    return () => {};
   }
 }

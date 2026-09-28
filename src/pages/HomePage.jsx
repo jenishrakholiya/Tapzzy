@@ -20,12 +20,14 @@ import {
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { useCart } from '../context/CartContext';
+import { useAdmin } from '../context/AdminContext';
 import { TrustedByMarquee } from '../components/TrustedByMarquee';
 import { TapzyyVideoDemo } from '../components/TapzyyVideoDemo';
 import CardPlacementSection from '../components/CardPlacementSection';
 
 export const HomePage = () => {
   const { addToCart } = useCart();
+  const { products: storeProducts, activeProducts } = useAdmin();
   const [openFaq, setOpenFaq] = useState(null);
   const productScrollRef = useRef(null);
 
@@ -105,6 +107,17 @@ export const HomePage = () => {
       a: "Yes. The Combo Pack includes both."
     }
   ];
+
+  const dynamicProducts = (storeProducts || [])
+    .filter(p => activeProducts[p.id] !== false)
+    .map(p => ({
+      ...p,
+      url: `/product/${p.slug || p.id}`,
+      rating: p.rating || 5,
+      reviewsCount: p.reviewsCount || 184
+    }));
+
+  const displayProducts = dynamicProducts.length > 0 ? dynamicProducts : showcaseProducts;
 
   return (
     <div style={{ width: '100%', overflowX: 'hidden' }}>
@@ -374,7 +387,7 @@ export const HomePage = () => {
 
           {/* Horizontal Scroll Track */}
           <div ref={productScrollRef} className="product-scroll-track">
-            {showcaseProducts.map((prod) => (
+            {displayProducts.map((prod) => (
               <div key={prod.id + prod.name} className="product-scroll-card">
                 {/* Image Wrap with Soft Tint & Blue Badge */}
                 <Link to={prod.url} className="product-scroll-image-wrap">

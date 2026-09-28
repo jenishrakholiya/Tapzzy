@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { fetchOrders, createOrderInDb, updateOrderInDb, checkSupabaseStatus } from '../lib/supabaseService';
+import {
+  fetchOrders,
+  createOrderInDb,
+  updateOrderInDb,
+  checkSupabaseStatus,
+  subscribeToRealtimeOrders
+} from '../lib/supabaseService';
 
 const OrderContext = createContext();
 
@@ -109,6 +115,24 @@ export const OrderProvider = ({ children }) => {
 
   useEffect(() => {
     loadOrdersFromDb();
+
+    const unsubscribe = subscribeToRealtimeOrders(
+      (newRemoteOrder) => {
+        setOrders((prev) => {
+          if (prev.some((o) => o.id === newRemoteOrder.id)) return prev;
+          return [newRemoteOrder, ...prev];
+        });
+      },
+      (updatedRemoteOrder) => {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === updatedRemoteOrder.id ? { ...o, ...updatedRemoteOrder } : o))
+        );
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

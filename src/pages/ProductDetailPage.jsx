@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ShoppingBag,
   ShieldCheck,
-  Check,
   Truck,
   Zap,
   CheckCircle2,
@@ -72,14 +71,6 @@ export const ProductDetailPage = ({ overrideSlug }) => {
           </div>
         </div>
       </div>
-
-      {saveSuccessMsg && (
-        <div className="container" style={{ paddingTop: '1rem' }}>
-          <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', color: '#15803D', padding: '0.85rem 1.25rem', borderRadius: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Check size={18} /> Product details updated successfully!
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* 01 — PRODUCT HERO */}

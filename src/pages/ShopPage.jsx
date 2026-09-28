@@ -195,13 +195,13 @@ export const ShopPage = () => {
                 <span style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--color-ink)' }}>
                   ₹{prod.price.toLocaleString('en-IN')}
                 </span>
-                {prod.isCombo && (
+                {prod.originalPrice && prod.originalPrice > prod.price && (
                   <>
                     <span style={{ fontSize: '1rem', textDecoration: 'line-through', color: 'var(--color-ink-soft)' }}>
                       ₹{prod.originalPrice.toLocaleString('en-IN')}
                     </span>
                     <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--color-google-green)' }}>
-                      Save ₹{prod.savings.toLocaleString('en-IN')}
+                      Save ₹{((prod.savings != null ? prod.savings : (prod.originalPrice - prod.price)) || 0).toLocaleString('en-IN')}
                     </span>
                   </>
                 )}

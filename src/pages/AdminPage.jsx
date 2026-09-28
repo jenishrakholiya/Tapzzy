@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -13,7 +14,11 @@ import {
   Database,
   AlertCircle,
   Printer,
-  X
+  X,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Tag
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +29,16 @@ import { PRODUCTS } from '../data/products';
 export const AdminPage = () => {
   const { user, isAdmin, adminLogin, logout } = useAuth();
   const { orders, updateOrderStatus, refreshOrders, dbStatus } = useOrders();
-  const { siteContent, activeProducts, updateHeroContent, toggleProductActive, updateProduct, products } = useAdmin();
+  const {
+    siteContent,
+    activeProducts,
+    updateHeroContent,
+    toggleProductActive,
+    updateProduct,
+    addProduct,
+    deleteProduct,
+    products
+  } = useAdmin();
   const displayProducts = products || PRODUCTS;
 
   // Login form state (empty by default for strict security)
@@ -48,9 +62,36 @@ export const AdminPage = () => {
   // Order Details Inspector Modal
   const [inspectOrder, setInspectOrder] = useState(null);
 
-  // Product Edit Modal
+  // Product Add & Edit Modal State
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [productFormData, setProductFormData] = useState({ name: '', price: 0, originalPrice: 0, badge: '' });
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [productActionMsg, setProductActionMsg] = useState('');
+
+  const [newProductData, setNewProductData] = useState({
+    name: '',
+    slug: '',
+    category: 'NFC Card',
+    badge: 'NEW ARRIVAL',
+    price: 1999,
+    originalPrice: 2499,
+    image: '/assets/google.png',
+    shortDescription: '',
+    description: '',
+    featuresText: 'Instant tap or laser QR code scan\nPremium 4mm thick durable acrylic\nZero apps or subscriptions needed',
+    isCombo: false
+  });
+
+  const [productFormData, setProductFormData] = useState({
+    name: '',
+    slug: '',
+    price: 0,
+    originalPrice: 0,
+    badge: '',
+    image: '',
+    shortDescription: '',
+    description: ''
+  });
 
   // Hero Copy Edit State
   const [headline, setHeadline] = useState(siteContent.heroHeadline);
@@ -165,18 +206,83 @@ export const AdminPage = () => {
     }
   };
 
-  // Product Edit Submit
+  // Product Creation Submit
+  const handleCreateProductSubmit = async (e) => {
+    e.preventDefault();
+    if (!newProductData.name.trim()) return;
+
+    const features = newProductData.featuresText
+      .split('\n')
+      .map(f => f.trim())
+      .filter(Boolean);
+
+    const generatedSlug = (newProductData.slug && newProductData.slug.trim())
+      ? newProductData.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+      : newProductData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+    await addProduct({
+      name: newProductData.name.trim(),
+      slug: generatedSlug,
+      category: newProductData.category || 'NFC Standee',
+      badge: newProductData.badge.trim(),
+      price: Number(newProductData.price),
+      originalPrice: Number(newProductData.originalPrice || newProductData.price),
+      image: newProductData.image || '/assets/google.png',
+      shortDescription: newProductData.shortDescription || `${newProductData.name} with instant contactless NFC and QR scan connectivity.`,
+      description: newProductData.description || `Enhance your business visibility with ${newProductData.name}. Designed for high-footfall checkout counters and reception desks.`,
+      features: features.length > 0 ? features : ["Instant contactless tap or QR scan", "Durable acrylic build", "No apps required"],
+      isCombo: newProductData.isCombo
+    });
+
+    setIsAddingProduct(false);
+    setNewProductData({
+      name: '',
+      slug: '',
+      category: 'NFC Standee',
+      badge: 'NEW ARRIVAL',
+      price: 1999,
+      originalPrice: 2499,
+      image: '/assets/google.png',
+      shortDescription: '',
+      description: '',
+      featuresText: 'Instant tap or laser QR code scan\nPremium 4mm thick durable acrylic\nZero apps or subscriptions needed',
+      isCombo: false
+    });
+    setProductActionMsg(`New product "${newProductData.name.trim()}" published to storefront & Supabase!`);
+    setTimeout(() => setProductActionMsg(''), 4500);
+  };
+
+  // Full Product Edit Submit
   const handleProductEditSubmit = async (e) => {
     e.preventDefault();
     if (editingProduct) {
+      const updatedSlug = (productFormData.slug && productFormData.slug.trim())
+        ? productFormData.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
+        : editingProduct.slug;
+
       await updateProduct(editingProduct.id, {
         name: productFormData.name,
+        slug: updatedSlug,
+        category: productFormData.category || editingProduct.category,
         price: Number(productFormData.price),
         originalPrice: Number(productFormData.originalPrice),
-        badge: productFormData.badge
+        badge: productFormData.badge,
+        image: productFormData.image,
+        shortDescription: productFormData.shortDescription,
+        description: productFormData.description
       });
       setEditingProduct(null);
+      setProductActionMsg('Product details successfully updated in database & storefront!');
+      setTimeout(() => setProductActionMsg(''), 4500);
     }
+  };
+
+  // Product Delete Handler
+  const handleDeleteProduct = async (productId) => {
+    await deleteProduct(productId);
+    setDeleteConfirmId(null);
+    setProductActionMsg('Product removed from catalog and database.');
+    setTimeout(() => setProductActionMsg(''), 4500);
   };
 
   // Save Hero Content
@@ -548,50 +654,104 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--color-ink)', margin: 0 }}>Managed Product Inventory</h3>
-                <div style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)' }}>Changes immediately persist to Supabase & the public storefront.</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)' }}>Add new products, edit pricing & descriptions. Changes immediately sync to Supabase & storefront.</div>
               </div>
+              <button
+                onClick={() => setIsAddingProduct(true)}
+                className="btn btn-brand"
+                style={{ gap: '0.4rem', padding: '0.65rem 1.25rem', fontWeight: '800', boxShadow: 'var(--shadow-sm)' }}
+              >
+                <Plus size={18} /> Add New Product
+              </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
+            {productActionMsg && (
+              <div style={{ padding: '0.85rem 1.25rem', borderRadius: '14px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: '0.9rem', fontWeight: '700', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle2 size={18} color="#16A34A" />
+                <span>{productActionMsg}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem' }}>
               {displayProducts.map((p) => {
                 const isActive = activeProducts[p.id] !== false;
                 return (
-                  <div key={p.id} className="card" style={{ padding: '1.5rem', borderRadius: '20px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--color-line)', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div key={p.id} className="card" style={{ padding: '1.5rem', borderRadius: '20px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--color-line)', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', opacity: isActive ? 1 : 0.65 }}>
                     <div>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
-                        <img src={p.image} alt={p.name} style={{ width: '70px', height: '70px', borderRadius: '12px', objectFit: 'contain', backgroundColor: 'var(--color-fog)', padding: '0.35rem', border: '1px solid var(--color-line)' }} />
+                        <img src={p.image} alt={p.name} style={{ width: '75px', height: '75px', borderRadius: '12px', objectFit: 'contain', backgroundColor: 'var(--color-fog)', padding: '0.35rem', border: '1px solid var(--color-line)' }} />
                         <div style={{ flexGrow: 1 }}>
-                          {p.badge && <span className="badge badge-brand" style={{ fontSize: '0.7rem', marginBottom: '0.2rem' }}>{p.badge}</span>}
-                          <h4 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--color-ink)', marginBottom: '0.2rem' }}>{p.name}</h4>
+                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                            {p.badge && <span className="badge badge-brand" style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}>{p.badge}</span>}
+                            <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', borderRadius: '6px', backgroundColor: 'var(--color-fog)', color: 'var(--color-ink-soft)', fontWeight: '700' }}>
+                              {p.category || 'NFC Standee'}
+                            </span>
+                          </div>
+                          <h4 style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--color-ink)', marginBottom: '0.2rem', lineHeight: '1.3' }}>{p.name}</h4>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                            <span style={{ fontWeight: '900', color: 'var(--color-brand-primary)', fontSize: '1.15rem' }}>₹{p.price.toLocaleString('en-IN')}</span>
+                            <span style={{ fontWeight: '900', color: 'var(--color-brand-primary)', fontSize: '1.2rem' }}>₹{p.price.toLocaleString('en-IN')}</span>
                             {p.originalPrice && <span style={{ textDecoration: 'line-through', color: 'var(--color-ink-soft)', fontSize: '0.85rem' }}>₹{p.originalPrice.toLocaleString('en-IN')}</span>}
                           </div>
                         </div>
                       </div>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--color-ink-soft)', lineHeight: '1.5', marginBottom: '1rem' }}>
-                        {p.shortDescription || 'Smart contactless card touchpoint.'}
+                      <p style={{ fontSize: '0.82rem', color: 'var(--color-ink-soft)', lineHeight: '1.5', marginBottom: '0.8rem' }}>
+                        {p.shortDescription || 'Smart contactless touchpoint.'}
                       </p>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-ink-soft)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <span>URL Slug:</span>
+                        <code style={{ backgroundColor: 'var(--color-fog)', padding: '0.15rem 0.4rem', borderRadius: '4px', color: 'var(--color-ink)', fontWeight: '600' }}>/product/{p.slug}</code>
+                      </div>
                     </div>
 
-                    <div style={{ borderTop: '1px solid var(--color-line)', paddingTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => {
-                          setEditingProduct(p);
-                          setProductFormData({ name: p.name, price: p.price, originalPrice: p.originalPrice || 0, badge: p.badge || '' });
-                        }}
-                        className="btn btn-secondary btn-sm"
-                        style={{ gap: '0.35rem', justifyContent: 'center' }}
-                      >
-                        <Edit3 size={14} /> Edit Price
-                      </button>
-                      <button
-                        onClick={() => toggleProductActive(p.id)}
-                        className={`btn btn-sm ${isActive ? 'btn-secondary' : 'btn-brand'}`}
-                        style={{ justifyContent: 'center' }}
-                      >
-                        {isActive ? 'Disable' : 'Enable'}
-                      </button>
+                    <div style={{ borderTop: '1px solid var(--color-line)', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => {
+                            setEditingProduct(p);
+                            setProductFormData({
+                              name: p.name || '',
+                              slug: p.slug || '',
+                              category: p.category || 'NFC Standee',
+                              price: p.price || 0,
+                              originalPrice: p.originalPrice || 0,
+                              badge: p.badge || '',
+                              image: p.image || '/assets/google.png',
+                              shortDescription: p.shortDescription || '',
+                              description: p.description || ''
+                            });
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{ gap: '0.35rem', justifyContent: 'center', fontSize: '0.8rem' }}
+                        >
+                          <Edit3 size={13} /> Edit Details
+                        </button>
+                        <Link
+                          to={`/product/${p.slug}`}
+                          target="_blank"
+                          className="btn btn-secondary btn-sm"
+                          style={{ gap: '0.35rem', justifyContent: 'center', fontSize: '0.8rem' }}
+                        >
+                          <ExternalLink size={13} /> View Live
+                        </Link>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem' }}>
+                        <button
+                          onClick={() => toggleProductActive(p.id)}
+                          className={`btn btn-sm ${isActive ? 'btn-secondary' : 'btn-brand'}`}
+                          style={{ justifyContent: 'center', fontSize: '0.8rem' }}
+                        >
+                          {isActive ? 'Disable from Store' : 'Enable in Store'}
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(p.id)}
+                          className="btn btn-secondary btn-sm"
+                          title="Delete Product"
+                          style={{ color: '#DC2626', borderColor: '#FEE2E2', backgroundColor: '#FEF2F2', padding: '0.35rem 0.65rem' }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -853,12 +1013,184 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
         )}
 
         {/* ========================================================= */}
+        {/* ADD NEW PRODUCT MODAL */}
+        {/* ========================================================= */}
+        {isAddingProduct && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '580px', width: '100%', backgroundColor: '#FFFFFF', padding: 'clamp(1.25rem, 4vw, 2.25rem)', borderRadius: '24px', boxShadow: 'var(--shadow-xl)', maxHeight: '92vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-line)', paddingBottom: '0.85rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: '800', margin: 0, color: 'var(--color-ink)' }}>Add New Product</h3>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--color-ink-soft)' }}>Create a product with automatic page URL & real-time DB sync.</div>
+                </div>
+                <button onClick={() => setIsAddingProduct(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem' }}>
+                  <X size={20} color="var(--color-ink-soft)" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateProductSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Product Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProductData.name}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      const autoSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+                      setNewProductData({ ...newProductData, name, slug: newProductData.slug ? newProductData.slug : autoSlug });
+                    }}
+                    placeholder="e.g. Google Review Acrylic NFC Standee Pro"
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>URL Slug</label>
+                    <input
+                      type="text"
+                      value={newProductData.slug}
+                      onChange={(e) => setNewProductData({ ...newProductData, slug: e.target.value })}
+                      placeholder="e.g. google-nfc-standee-pro"
+                      style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Category</label>
+                    <select
+                      value={newProductData.category}
+                      onChange={(e) => setNewProductData({ ...newProductData, category: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', outline: 'none', backgroundColor: '#FFFFFF' }}
+                    >
+                      <option value="NFC Standee">NFC Standee</option>
+                      <option value="NFC Card">NFC Card</option>
+                      <option value="Review Plate">Review Plate</option>
+                      <option value="Smart Combo">Smart Combo</option>
+                      <option value="Business Touchpoint">Business Touchpoint</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Selling Price (₹) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={newProductData.price}
+                      onChange={(e) => setNewProductData({ ...newProductData, price: e.target.value })}
+                      placeholder="1999"
+                      style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Original MRP (₹)</label>
+                    <input
+                      type="number"
+                      value={newProductData.originalPrice}
+                      onChange={(e) => setNewProductData({ ...newProductData, originalPrice: e.target.value })}
+                      placeholder="2999"
+                      style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Badge Tag (Optional)</label>
+                  <input
+                    type="text"
+                    value={newProductData.badge}
+                    onChange={(e) => setNewProductData({ ...newProductData, badge: e.target.value })}
+                    placeholder="e.g. BESTSELLER, HOT DEAL, NEW ARRIVAL"
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+
+                {/* Preset image selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Product Image</label>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    {[
+                      { label: '🔵 Google Card', src: '/assets/google.png' },
+                      { label: '🟣 Instagram Card', src: '/assets/insta.png' },
+                      { label: '🟠 Tapzyy Combo', src: '/assets/combo.png' },
+                      { label: '🟢 Standee Pro', src: '/assets/hero-mockup.png' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.src}
+                        type="button"
+                        onClick={() => setNewProductData({ ...newProductData, image: opt.src })}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', borderColor: newProductData.image === opt.src ? 'var(--color-brand-primary)' : 'var(--color-line)', backgroundColor: newProductData.image === opt.src ? 'var(--color-brand-light)' : '#FFFFFF' }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={newProductData.image}
+                      onChange={(e) => setNewProductData({ ...newProductData, image: e.target.value })}
+                      placeholder="/assets/google.png or https://..."
+                      style={{ flexGrow: 1, padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', outline: 'none' }}
+                    />
+                    {newProductData.image && (
+                      <img src={newProductData.image} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain', backgroundColor: 'var(--color-fog)', border: '1px solid var(--color-line)' }} />
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Short Description</label>
+                  <input
+                    type="text"
+                    value={newProductData.shortDescription}
+                    onChange={(e) => setNewProductData({ ...newProductData, shortDescription: e.target.value })}
+                    placeholder="e.g. Tap or scan to collect 5-star Google reviews in seconds."
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Full Description</label>
+                  <textarea
+                    rows={3}
+                    value={newProductData.description}
+                    onChange={(e) => setNewProductData({ ...newProductData, description: e.target.value })}
+                    placeholder="Comprehensive description for the product detail page..."
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', fontFamily: 'var(--font-sans)', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Key Highlights (one per line)</label>
+                  <textarea
+                    rows={3}
+                    value={newProductData.featuresText}
+                    onChange={(e) => setNewProductData({ ...newProductData, featuresText: e.target.value })}
+                    placeholder="Instant contactless tap or QR scan&#10;Durable 4mm acrylic build&#10;Zero app installation required"
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', fontFamily: 'var(--font-sans)', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', borderTop: '1px solid var(--color-line)', paddingTop: '1rem' }}>
+                  <button type="button" onClick={() => setIsAddingProduct(false)} className="btn btn-secondary btn-sm">Cancel</button>
+                  <button type="submit" className="btn btn-brand btn-sm">Publish Product to Store & DB</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* PRODUCT EDIT MODAL */}
         {/* ========================================================= */}
         {editingProduct && (
           <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-            <div className="card" style={{ maxWidth: '440px', width: '100%', backgroundColor: '#FFFFFF', padding: 'clamp(1.25rem, 4vw, 2rem)', borderRadius: '24px', boxShadow: 'var(--shadow-xl)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div className="card" style={{ maxWidth: '540px', width: '100%', backgroundColor: '#FFFFFF', padding: 'clamp(1.25rem, 4vw, 2.25rem)', borderRadius: '24px', boxShadow: 'var(--shadow-xl)', maxHeight: '92vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--color-line)', paddingBottom: '0.85rem' }}>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--color-ink)' }}>Edit {editingProduct.name}</h3>
                 <button onClick={() => setEditingProduct(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem' }}>
                   <X size={20} color="var(--color-ink-soft)" />
@@ -879,6 +1211,32 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>URL Slug</label>
+                    <input
+                      type="text"
+                      value={productFormData.slug}
+                      onChange={(e) => setProductFormData({ ...productFormData, slug: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Category</label>
+                    <select
+                      value={productFormData.category || 'NFC Standee'}
+                      onChange={(e) => setProductFormData({ ...productFormData, category: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', outline: 'none', backgroundColor: '#FFFFFF' }}
+                    >
+                      <option value="NFC Standee">NFC Standee</option>
+                      <option value="NFC Card">NFC Card</option>
+                      <option value="Review Plate">Review Plate</option>
+                      <option value="Smart Combo">Smart Combo</option>
+                      <option value="Business Touchpoint">Business Touchpoint</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Selling Price (₹)</label>
                     <input
                       type="number"
@@ -889,7 +1247,7 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Original Price (₹)</label>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Original MRP (₹)</label>
                     <input
                       type="number"
                       value={productFormData.originalPrice}
@@ -909,11 +1267,94 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                {/* Preset image selector */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Product Image</label>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    {[
+                      { label: '🔵 Google Card', src: '/assets/google.png' },
+                      { label: '🟣 Instagram Card', src: '/assets/insta.png' },
+                      { label: '🟠 Tapzyy Combo', src: '/assets/combo.png' },
+                      { label: '🟢 Standee Pro', src: '/assets/hero-mockup.png' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.src}
+                        type="button"
+                        onClick={() => setProductFormData({ ...productFormData, image: opt.src })}
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', borderColor: productFormData.image === opt.src ? 'var(--color-brand-primary)' : 'var(--color-line)', backgroundColor: productFormData.image === opt.src ? 'var(--color-brand-light)' : '#FFFFFF' }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={productFormData.image || ''}
+                      onChange={(e) => setProductFormData({ ...productFormData, image: e.target.value })}
+                      placeholder="/assets/google.png or https://..."
+                      style={{ flexGrow: 1, padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', outline: 'none' }}
+                    />
+                    {productFormData.image && (
+                      <img src={productFormData.image} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'contain', backgroundColor: 'var(--color-fog)', border: '1px solid var(--color-line)' }} />
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Short Description</label>
+                  <input
+                    type="text"
+                    value={productFormData.shortDescription || ''}
+                    onChange={(e) => setProductFormData({ ...productFormData, shortDescription: e.target.value })}
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--color-ink)' }}>Full Description</label>
+                  <textarea
+                    rows={3}
+                    value={productFormData.description || ''}
+                    onChange={(e) => setProductFormData({ ...productFormData, description: e.target.value })}
+                    style={{ width: '100%', padding: '0.65rem', borderRadius: '10px', border: '1px solid var(--color-line)', fontSize: '0.85rem', fontFamily: 'var(--font-sans)', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', borderTop: '1px solid var(--color-line)', paddingTop: '1rem' }}>
                   <button type="button" onClick={() => setEditingProduct(null)} className="btn btn-secondary btn-sm">Cancel</button>
-                  <button type="submit" className="btn btn-brand btn-sm">Save to Supabase & Store</button>
+                  <button type="submit" className="btn btn-brand btn-sm">Save Changes to Database</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* DELETE CONFIRMATION MODAL */}
+        {/* ========================================================= */}
+        {deleteConfirmId && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.65)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '420px', width: '100%', backgroundColor: '#FFFFFF', padding: '1.75rem', borderRadius: '24px', boxShadow: 'var(--shadow-xl)', textAlign: 'center' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '50%', backgroundColor: '#FEE2E2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <Trash2 size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '0.5rem', color: 'var(--color-ink)' }}>Delete this Product?</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-ink-soft)', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+                This product will be permanently removed from the storefront catalog and Supabase database. Customers will no longer be able to purchase it.
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                <button type="button" onClick={() => setDeleteConfirmId(null)} className="btn btn-secondary btn-sm" style={{ minWidth: '100px' }}>Cancel</button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteProduct(deleteConfirmId)}
+                  className="btn btn-sm"
+                  style={{ backgroundColor: '#DC2626', color: '#FFFFFF', border: 'none', fontWeight: '700', minWidth: '100px' }}
+                >
+                  Yes, Delete
+                </button>
+              </div>
             </div>
           </div>
         )}

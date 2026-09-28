@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PRODUCTS as DEFAULT_PRODUCTS } from '../data/products';
-import { fetchProductsFromDb, updateProductInDb } from '../lib/supabaseService';
+import {
+  fetchProductsFromDb,
+  createProductInDb,
+  updateProductInDb,
+  deleteProductFromDb,
+  subscribeToRealtimeProducts
+} from '../lib/supabaseService';
 
 const AdminContext = createContext();
 
@@ -27,21 +33,37 @@ export const AdminProvider = ({ children }) => {
     if (!saved) return DEFAULT_PRODUCTS;
     try {
       const parsed = JSON.parse(saved);
-      return DEFAULT_PRODUCTS.map(defP => {
+      if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_PRODUCTS;
+      
+      const defaultIds = new Set(DEFAULT_PRODUCTS.map(d => d.id));
+      const mergedDefaults = DEFAULT_PRODUCTS.map(defP => {
         const found = parsed.find(p => p.id === defP.id);
-        return found ? { ...defP, ...found, gallery: defP.gallery, image: defP.image } : defP;
+        return found ? { ...defP, ...found } : defP;
       });
+      const customAdded = parsed.filter(p => !defaultIds.has(p.id));
+      return [...mergedDefaults, ...customAdded];
     } catch {
       return DEFAULT_PRODUCTS;
     }
   });
 
+  // Fetch from Supabase on mount and listen to realtime updates
   useEffect(() => {
     fetchProductsFromDb().then(({ products: remoteProducts, fromDb }) => {
       if (fromDb && remoteProducts && remoteProducts.length > 0) {
         setProducts(remoteProducts);
       }
     });
+
+    const unsubscribe = subscribeToRealtimeProducts((updatedRemoteProducts) => {
+      if (updatedRemoteProducts && updatedRemoteProducts.length > 0) {
+        setProducts(updatedRemoteProducts);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const [siteContent, setSiteContent] = useState(() => {
@@ -66,9 +88,63 @@ export const AdminProvider = ({ children }) => {
     localStorage.setItem('tapzyy_active_products', JSON.stringify(activeProducts));
   }, [activeProducts]);
 
+  const addProduct = async (productData) => {
+    const rawSlug = productData.slug || productData.name || `product-${Date.now()}`;
+    const slug = rawSlug
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const newProd = {
+      id: `prod_${Date.now()}`,
+      name: productData.name || 'New Tapzyy Product',
+      slug,
+      badge: productData.badge || 'New Arrival',
+      price: Number(productData.price) || 1999,
+      originalPrice: Number(productData.originalPrice) || Number(productData.price) || 2499,
+      savings: Math.max(0, (Number(productData.originalPrice) || 0) - (Number(productData.price) || 0)),
+      image: productData.image || '/assets/google.png',
+      gallery: productData.image ? [productData.image] : ['/assets/google.png'],
+      shortDescription: productData.shortDescription || 'Smart contactless NFC solution for modern businesses.',
+      description: productData.description || 'Designed to make customer interactions effortless, faster, and more engaging.',
+      features: productData.features || [
+        "Instant contactless connection with one tap or scan",
+        "High-durability acrylic build for high-traffic counters",
+        "Zero subscription fees or hidden apps required"
+      ],
+      specifications: productData.specifications || [
+        { label: "Material", value: "Premium 4mm Acrylic" },
+        { label: "Technology", value: "High-Speed NFC + Laser QR" },
+        { label: "Compatibility", value: "iOS & Android" }
+      ],
+      faqs: [
+        { question: "How does it work?", answer: "Customers tap with any NFC smartphone or scan the laser QR code." }
+      ],
+      isCombo: Boolean(productData.isCombo),
+      isActive: true,
+      category: productData.category || 'NFC Card'
+    };
+
+    setProducts(prev => [newProd, ...prev]);
+    setActiveProducts(prev => ({ ...prev, [newProd.id]: true }));
+    await createProductInDb(newProd);
+    return newProd;
+  };
+
   const updateProduct = async (productId, updatedFields) => {
-    setProducts(prev => prev.map(p => p.id === productId ? { ...p, ...updatedFields } : p));
+    setProducts(prev => prev.map(p => (p.id === productId ? { ...p, ...updatedFields } : p)));
     await updateProductInDb(productId, updatedFields);
+  };
+
+  const deleteProduct = async (productId) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    setActiveProducts(prev => {
+      const copy = { ...prev };
+      delete copy[productId];
+      return copy;
+    });
+    await deleteProductFromDb(productId);
   };
 
   const resetProducts = () => {
@@ -88,7 +164,7 @@ export const AdminProvider = ({ children }) => {
     if (['combo-pack', 'combo', 'combo-card'].includes(normalized)) {
       return products.find(p => p.id === 'combo') || products[2];
     }
-    return products.find(p => p.slug === slugOrId || p.id === slugOrId) || products[0];
+    return products.find(p => p.slug === normalized || p.id === normalized || p.slug === slugOrId || p.id === slugOrId) || null;
   };
 
   const updateHeroContent = (headline, subtext) => {
@@ -122,7 +198,9 @@ export const AdminProvider = ({ children }) => {
         products,
         siteContent,
         activeProducts,
+        addProduct,
         updateProduct,
+        deleteProduct,
         resetProducts,
         getProductBySlug,
         updateHeroContent,
@@ -136,4 +214,3 @@ export const AdminProvider = ({ children }) => {
 };
 
 export const useAdmin = () => useContext(AdminContext);
-
