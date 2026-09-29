@@ -59,7 +59,8 @@ export const TapzyyVideoDemo = ({
               muted
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
+              poster="/assets/tapzyy-counter-hero.jpg"
               className="tapzyy-demo-img"
             />
           </div>

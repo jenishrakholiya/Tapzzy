@@ -57,7 +57,8 @@ export default function SeeInActionSection({
               muted
               loop
               playsInline
-              preload="auto"
+              preload="metadata"
+              poster="/assets/tapzyy-counter-hero.jpg"
               className="see-in-action-video"
             />
           </div>
