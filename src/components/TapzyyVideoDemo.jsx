@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { VolumeX, Volume2, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export const TapzyyVideoDemo = ({
   video = "/videos/tapzyy-demo.mp4",
@@ -30,16 +30,6 @@ export const TapzyyVideoDemo = ({
   ctaText = "See How It Works →",
   ctaLink = "/how-it-works"
 }) => {
-  const videoRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(true);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(videoRef.current.muted);
-    }
-  };
-
   return (
     <section className="tapzyy-demo-section">
       <div className="container">
@@ -76,27 +66,15 @@ export const TapzyyVideoDemo = ({
 
               {/* Video Player */}
               <video
-                ref={videoRef}
                 src={video}
                 autoPlay
-                muted={isMuted}
+                muted
                 loop
                 playsInline
                 preload="metadata"
                 poster="/assets/tapzyy-counter-hero.jpg"
                 className="tapzyy-phone-video"
               />
-
-              {/* Mute / Unmute Control Overlay */}
-              <button
-                type="button"
-                onClick={toggleMute}
-                className="tapzyy-phone-sound-btn"
-                aria-label={isMuted ? "Unmute video sound" : "Mute video sound"}
-              >
-                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                <span>{isMuted ? "Tap to Unmute" : "Sound On"}</span>
-              </button>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ShoppingBag, 
@@ -8,23 +8,12 @@ import {
   QrCode, 
   CheckCircle, 
   Sparkles, 
-  Star,
-  Volume2,
-  VolumeX
+  Star
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { TrustedByMarquee } from '../components/TrustedByMarquee';
 
 export const HowItWorksPage = () => {
-  const videoRef = useRef(null);
-  const [isMuted, setIsMuted] = useState(true);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(videoRef.current.muted);
-    }
-  };
 
   const steps = [
     {
@@ -91,7 +80,7 @@ export const HowItWorksPage = () => {
             backgroundColor: '#FFFFFF',
             borderRadius: '24px',
             border: '1px solid #E2E8F0',
-            padding: '1.25rem',
+            padding: '1.5rem',
             boxShadow: '0 20px 48px -12px rgba(0, 102, 255, 0.14), 0 4px 16px rgba(0, 0, 0, 0.04)',
             overflow: 'hidden'
           }}>
@@ -105,57 +94,41 @@ export const HowItWorksPage = () => {
               alignItems: 'center',
               justifyContent: 'center',
               width: '100%',
-              maxWidth: '300px',
-              aspectRatio: '9 / 18',
+              maxWidth: '280px',
+              aspectRatio: '9 / 18.5',
               maxHeight: '460px',
               margin: '0 auto',
               border: '7px solid #0F172A'
             }}>
+              {/* Phone Notch */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '80px',
+                height: '14px',
+                backgroundColor: '#0F172A',
+                borderBottomLeftRadius: '10px',
+                borderBottomRightRadius: '10px',
+                zIndex: 10
+              }} />
+
               <video
-                ref={videoRef}
                 src="/videos/tapzyy-demo.mp4"
                 autoPlay
-                muted={isMuted}
+                muted
                 loop
                 playsInline
-                controls
-                preload="auto"
+                preload="metadata"
+                poster="/assets/tapzyy-counter-hero.jpg"
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'contain',
+                  objectFit: 'cover',
                   display: 'block'
                 }}
               />
-              <button
-                type="button"
-                onClick={toggleMute}
-                aria-label={isMuted ? "Unmute video sound" : "Mute video sound"}
-                title={isMuted ? "Unmute video sound" : "Mute video sound"}
-                style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  background: 'rgba(11, 18, 32, 0.8)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  color: '#FFFFFF',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  padding: '0.4rem 0.85rem',
-                  borderRadius: '9999px',
-                  border: '1px solid rgba(255, 255, 255, 0.22)',
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                <span>{isMuted ? "Sound Off • Tap to Unmute" : "Sound On"}</span>
-              </button>
             </div>
 
             {/* Micro Badges Under Video */}

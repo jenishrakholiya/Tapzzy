@@ -25,17 +25,6 @@ export const AiReviewSuitePage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(true);
 
-  // Video State
-  const videoRef = useRef(null);
-  const [isVideoMuted, setIsVideoMuted] = useState(true);
-
-  const toggleVideoMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsVideoMuted(videoRef.current.muted);
-    }
-  };
-
   // Generated Reviews Data State
   const [reviews, setReviews] = useState({
     professional: "Recently visited Urban Brew Café for artisanal cold brew & fresh bakery items. The staff maintained high standards of service, clear communication, and efficiency throughout. Highly recommend them for reliable quality.",
@@ -250,26 +239,15 @@ export const AiReviewSuitePage = () => {
           <div className="ai-video-demo-card">
             <div className="ai-video-player-wrapper">
               <video
-                ref={videoRef}
                 src="/videos/tapzyy-demo.mp4"
                 className="ai-demo-player"
                 autoPlay
-                muted={isVideoMuted}
+                muted
                 loop
                 playsInline
-                controls
-                preload="auto"
+                preload="metadata"
+                poster="/assets/tapzyy-counter-hero.jpg"
               />
-              <button
-                type="button"
-                className="ai-video-mute-btn"
-                onClick={toggleVideoMute}
-                aria-label={isVideoMuted ? "Unmute video sound" : "Mute video sound"}
-                title={isVideoMuted ? "Unmute video sound" : "Mute video sound"}
-              >
-                {isVideoMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                <span>{isVideoMuted ? "Sound Off • Tap to Unmute" : "Sound On"}</span>
-              </button>
             </div>
 
             <div className="ai-video-highlights-grid">
