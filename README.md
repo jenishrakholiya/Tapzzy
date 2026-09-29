@@ -112,3 +112,11 @@ npm run preview
 - **Dynamic Touch Controls**: 44px+ touch targets across all mobile viewports (320px, 375px, 412px, 768px+).
 - **Responsive Grids**: Auto-fitting responsive columns avoiding horizontal overflow.
 - **Sticky CTA Navigation**: Mobile checkout and buy buttons stick above the device navigation bar on product pages.
+
+---
+
+## 🚀 Vercel Production Deployment
+- **SPA Rewrites**: Handled via `vercel.json` for client-side routing on direct reloads.
+- **Serverless API**: Dispatches order confirmation emails at `/api/send-order-email`.
+- **Admin Portal**: Accessible at `/admin-tap`.
+
