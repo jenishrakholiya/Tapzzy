@@ -97,15 +97,19 @@ export const HowItWorksPage = () => {
           }}>
             <div style={{
               position: 'relative',
-              borderRadius: '18px',
+              borderRadius: '32px',
               overflow: 'hidden',
               backgroundColor: '#080E1A',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              boxShadow: '0 20px 48px -10px rgba(0, 102, 255, 0.28), 0 4px 16px rgba(0, 0, 0, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              aspectRatio: '16 / 9',
-              maxHeight: '520px'
+              width: '100%',
+              maxWidth: '300px',
+              aspectRatio: '9 / 18',
+              maxHeight: '460px',
+              margin: '0 auto',
+              border: '7px solid #0F172A'
             }}>
               <video
                 ref={videoRef}

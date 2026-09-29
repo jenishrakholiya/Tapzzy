@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { VolumeX, Volume2, Sparkles } from 'lucide-react';
 
 export const TapzyyVideoDemo = ({
   video = "/videos/tapzyy-demo.mp4",
@@ -13,22 +14,32 @@ export const TapzyyVideoDemo = ({
     {
       number: "01",
       title: "TAP OR SCAN",
-      desc: "NFC and QR make the experience simple."
+      desc: "NFC chip & dynamic QR code make the experience instant."
     },
     {
       number: "02",
-      title: "REACH THE RIGHT PLACE",
-      desc: "Send customers directly to your chosen destination."
+      title: "DIRECT DESTINATION",
+      desc: "Send customers straight to your Google review page."
     },
     {
       number: "03",
-      title: "KEEP GROWING",
-      desc: "Turn everyday customer interactions into valuable digital connections."
+      title: "AUTOMATED GROWTH",
+      desc: "Turn everyday customer visits into 5-star digital reputation."
     }
   ],
   ctaText = "See How It Works →",
   ctaLink = "/how-it-works"
 }) => {
+  const videoRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+    }
+  };
+
   return (
     <section className="tapzyy-demo-section">
       <div className="container">
@@ -36,7 +47,8 @@ export const TapzyyVideoDemo = ({
         {/* SECTION HEADER */}
         <div className="tapzyy-demo-header">
           <div className="tapzyy-demo-eyebrow">
-            {eyebrow}
+            <Sparkles size={13} style={{ flexShrink: 0 }} />
+            <span>{eyebrow}</span>
           </div>
           <h2 className="tapzyy-demo-heading">
             {heading}
@@ -48,24 +60,47 @@ export const TapzyyVideoDemo = ({
           )}
         </div>
 
-        {/* CONNECTED BANNER CARD (LEFT: VIDEO, RIGHT: TAPZYY BLUE PANEL) */}
+        {/* UNIFIED BANNER CARD */}
         <div className="tapzyy-demo-banner">
 
-          {/* LEFT: VIDEO AREA (VIDEO PLAYS FIRST ON MOBILE) */}
-          <div className="tapzyy-demo-media">
-            <video
-              src={video}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              poster="/assets/tapzyy-counter-hero.jpg"
-              className="tapzyy-demo-img"
-            />
+          {/* LEFT: SMARTPHONE MOCKUP FRAME CONTAINER */}
+          <div className="tapzyy-demo-media-container">
+            <div className="tapzyy-phone-frame">
+              {/* Phone Camera Punch Hole Notch */}
+              <div className="tapzyy-phone-notch" />
+              
+              {/* Live Badge */}
+              <div className="tapzyy-phone-live-tag">
+                <span className="live-dot" /> LIVE NFC DEMO
+              </div>
+
+              {/* Video Player */}
+              <video
+                ref={videoRef}
+                src={video}
+                autoPlay
+                muted={isMuted}
+                loop
+                playsInline
+                preload="metadata"
+                poster="/assets/tapzyy-counter-hero.jpg"
+                className="tapzyy-phone-video"
+              />
+
+              {/* Mute / Unmute Control Overlay */}
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="tapzyy-phone-sound-btn"
+                aria-label={isMuted ? "Unmute video sound" : "Mute video sound"}
+              >
+                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                <span>{isMuted ? "Tap to Unmute" : "Sound On"}</span>
+              </button>
+            </div>
           </div>
 
-          {/* RIGHT: TAPZYY BLUE CONTENT PANEL (TEXT SHOWS AT BOTTOM ON MOBILE) */}
+          {/* RIGHT: BLUE CONTENT PANEL */}
           <div className="tapzyy-demo-content">
             <div className="tapzyy-demo-panel-eyebrow">
               {panelEyebrow}
@@ -79,7 +114,7 @@ export const TapzyyVideoDemo = ({
               {panelDescription}
             </p>
 
-            {/* THREE BENEFIT ITEMS */}
+            {/* BENEFITS LIST */}
             <div className="tapzyy-demo-benefits">
               {benefits.map((item, idx) => (
                 <div key={idx} className="tapzyy-demo-benefit-item">
@@ -108,89 +143,169 @@ export const TapzyyVideoDemo = ({
       {/* COMPONENT SCOPED CSS */}
       <style>{`
         .tapzyy-demo-section {
-          padding: 5.5rem 0;
+          padding: 3.5rem 0;
           background-color: #FAF9F6;
           border-bottom: 1px solid var(--color-line, #E2E8F0);
           overflow: hidden;
         }
 
         .tapzyy-demo-header {
-          max-width: 780px;
-          margin: 0 auto 3.25rem auto;
+          max-width: 760px;
+          margin: 0 auto 2.25rem auto;
           text-align: center;
         }
 
         .tapzyy-demo-eyebrow {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
           font-size: 0.78rem;
           font-weight: 800;
           color: var(--color-brand-primary, #0066FF);
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.65rem;
           background-color: rgba(0, 102, 255, 0.08);
           padding: 0.35rem 0.85rem;
           border-radius: 9999px;
         }
 
         .tapzyy-demo-heading {
-          font-size: clamp(2rem, 3.5vw, 2.75rem);
+          font-size: clamp(1.85rem, 3.2vw, 2.5rem);
           font-weight: 800;
           color: var(--color-ink, #0B1220);
           line-height: 1.2;
           letter-spacing: -0.02em;
-          margin-bottom: 1rem;
+          margin-bottom: 0.75rem;
         }
 
         .tapzyy-demo-subtext {
-          font-size: 1.05rem;
+          font-size: 1rem;
           color: var(--color-ink-soft, #475569);
-          line-height: 1.6;
+          line-height: 1.55;
           margin: 0 auto;
-          max-width: 620px;
+          max-width: 600px;
         }
 
         /* UNIFIED CONNECTED BANNER CARD */
         .tapzyy-demo-banner {
           display: grid;
-          grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-          background-color: #0066FF;
-          border-radius: 28px;
+          grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+          background: linear-gradient(135deg, #0066FF 0%, #0047AB 100%);
+          border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 20px 48px -10px rgba(0, 102, 255, 0.28), 0 4px 16px rgba(11, 18, 32, 0.08);
-          border: 1px solid rgba(0, 102, 255, 0.25);
+          box-shadow: 0 16px 40px -10px rgba(0, 102, 255, 0.3), 0 4px 16px rgba(11, 18, 32, 0.08);
+          border: 1px solid rgba(0, 102, 255, 0.3);
           align-items: center;
+          padding: 2.25rem;
+          gap: 2rem;
         }
 
-        /* LEFT SIDE: VIDEO AREA */
-        .tapzyy-demo-media {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          min-height: 480px;
-          overflow: hidden;
+        /* LEFT SIDE: SMARTPHONE DEVICE MOCKUP */
+        .tapzyy-demo-media-container {
           display: flex;
           align-items: center;
           justify-content: center;
-          line-height: 0;
-          background-color: #080E1A;
+          width: 100%;
         }
 
-        .tapzyy-demo-img {
+        .tapzyy-phone-frame {
+          position: relative;
+          width: 100%;
+          max-width: 290px;
+          aspect-ratio: 9 / 18.5;
+          max-height: 480px;
+          background-color: #080E1A;
+          border-radius: 36px;
+          border: 7px solid #0F172A;
+          box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15);
+          overflow: hidden;
+          margin: 0 auto;
+        }
+
+        .tapzyy-phone-notch {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 84px;
+          height: 16px;
+          background-color: #0F172A;
+          border-bottom-left-radius: 12px;
+          border-bottom-right-radius: 12px;
+          z-index: 10;
+        }
+
+        .tapzyy-phone-live-tag {
+          position: absolute;
+          top: 10px;
+          left: 12px;
+          z-index: 10;
+          font-size: 0.65rem;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          color: #FFFFFF;
+          background: rgba(15, 23, 42, 0.75);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          padding: 0.2rem 0.55rem;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .live-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background-color: #10B981;
+          box-shadow: 0 0 8px #10B981;
+          animation: livePulse 1.5s infinite;
+        }
+
+        @keyframes livePulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        .tapzyy-phone-video {
           width: 100%;
           height: 100%;
-          object-fit: contain;
-          object-position: center center;
+          object-fit: cover;
+          object-position: center;
           display: block;
-          -webkit-transform: translateZ(0);
-          transform: translateZ(0);
-          -webkit-backface-visibility: hidden;
-          backface-visibility: hidden;
         }
 
-        /* RIGHT SIDE: TAPZYY BLUE CONTENT PANEL */
+        .tapzyy-phone-sound-btn {
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          z-index: 10;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          color: #FFFFFF;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 0.35rem 0.65rem;
+          border-radius: 20px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .tapzyy-phone-sound-btn:hover {
+          background: rgba(15, 23, 42, 0.98);
+          transform: scale(1.04);
+        }
+
+        /* RIGHT SIDE: CONTENT PANEL */
         .tapzyy-demo-content {
-          padding: 3.5rem 3.25rem;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -200,82 +315,82 @@ export const TapzyyVideoDemo = ({
 
         .tapzyy-demo-panel-eyebrow {
           display: inline-block;
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           font-weight: 800;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #FFFFFF;
           background-color: rgba(255, 255, 255, 0.2);
-          padding: 0.35rem 0.85rem;
+          padding: 0.3rem 0.75rem;
           border-radius: 9999px;
-          margin-bottom: 1.1rem;
+          margin-bottom: 0.85rem;
         }
 
         .tapzyy-demo-panel-heading {
-          font-size: clamp(1.65rem, 2.4vw, 2.2rem);
-          font-weight: 900;
+          font-size: clamp(1.5rem, 2.2vw, 2rem);
+          font-weight: 800;
           color: #FFFFFF;
-          line-height: 1.2;
+          line-height: 1.25;
           letter-spacing: -0.02em;
-          margin-bottom: 1rem;
+          margin-bottom: 0.75rem;
         }
 
         .tapzyy-demo-panel-desc {
-          font-size: 0.98rem;
+          font-size: 0.92rem;
           color: rgba(255, 255, 255, 0.9);
-          line-height: 1.6;
-          margin-bottom: 1.85rem;
+          line-height: 1.55;
+          margin-bottom: 1.5rem;
         }
 
         /* BENEFIT LIST */
         .tapzyy-demo-benefits {
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
-          margin-bottom: 2.25rem;
+          gap: 1rem;
+          margin-bottom: 1.75rem;
           width: 100%;
         }
 
         .tapzyy-demo-benefit-item {
           display: flex;
           align-items: flex-start;
-          gap: 1.15rem;
+          gap: 0.85rem;
         }
 
         .tapzyy-demo-benefit-num {
-          font-size: 0.85rem;
-          font-weight: 900;
+          font-size: 0.8rem;
+          font-weight: 800;
           color: #0066FF;
           background-color: #FFFFFF;
-          width: 34px;
-          height: 34px;
-          border-radius: 10px;
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         }
 
         .tapzyy-demo-benefit-title {
-          font-size: 0.88rem;
+          font-size: 0.82rem;
           font-weight: 800;
           color: #FFFFFF;
           letter-spacing: 0.04em;
           text-transform: uppercase;
-          margin-bottom: 0.2rem;
+          margin-bottom: 0.15rem;
         }
 
         .tapzyy-demo-benefit-desc {
-          font-size: 0.88rem;
+          font-size: 0.84rem;
           color: rgba(255, 255, 255, 0.88);
-          line-height: 1.45;
+          line-height: 1.4;
           margin: 0;
         }
 
         /* WHITE CTA BUTTON */
         .tapzyy-demo-cta-wrap {
-          margin-top: 0.25rem;
+          margin-top: 0.2rem;
           width: 100%;
         }
 
@@ -285,57 +400,37 @@ export const TapzyyVideoDemo = ({
           justify-content: center;
           background-color: #FFFFFF;
           color: #0B1220;
-          padding: 0.9rem 1.8rem;
+          padding: 0.8rem 1.6rem;
           border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 700;
+          font-size: 0.95rem;
+          font-weight: 800;
           text-decoration: none;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .tapzyy-demo-btn-white:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
           background-color: #F8FAFC;
         }
 
-        /* RESPONSIVE MOBILE & TABLET (VIDEO PLAYS FIRST, TEXT AT BOTTOM) */
+        /* RESPONSIVE MOBILE & TABLET */
         @media (max-width: 968px) {
           .tapzyy-demo-section {
-            padding: 2.5rem 0 3.5rem;
+            padding: 2.5rem 0;
           }
 
           .tapzyy-demo-banner {
-            display: flex;
-            flex-direction: column;
-            border-radius: 22px;
+            grid-template-columns: 1fr;
+            padding: 1.75rem 1.25rem;
+            gap: 1.75rem;
+            border-radius: 20px;
           }
 
-          /* VIDEO ON TOP */
-          .tapzyy-demo-media {
-            order: 1;
-            width: 100%;
-            min-height: auto;
-            padding: 0;
-            background-color: #080E1A;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-
-          .tapzyy-demo-img {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-            object-position: center;
-          }
-
-          /* TEXT AT BOTTOM */
-          .tapzyy-demo-content {
-            order: 2;
-            width: 100%;
-            padding: 2.5rem 1.75rem 2.25rem;
+          .tapzyy-phone-frame {
+            max-width: 260px;
+            max-height: 420px;
           }
 
           .tapzyy-demo-btn-white {
@@ -346,15 +441,15 @@ export const TapzyyVideoDemo = ({
 
         @media (max-width: 640px) {
           .tapzyy-demo-section {
-            padding: 1.5rem 0 2.5rem;
+            padding: 2rem 0;
           }
 
-          .tapzyy-demo-banner {
-            border-radius: 18px;
+          .tapzyy-demo-heading {
+            font-size: 1.6rem;
           }
 
-          .tapzyy-demo-content {
-            padding: 2rem 1.25rem 1.75rem;
+          .tapzyy-demo-subtext {
+            font-size: 0.92rem;
           }
         }
       `}</style>
