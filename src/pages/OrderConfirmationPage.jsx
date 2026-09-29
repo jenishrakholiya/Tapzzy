@@ -2,7 +2,13 @@ import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { CheckCircle, Printer, ArrowRight, Mail, Share2, Copy, Check } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
-import { generateOrderMailtoUrl, generateOrderWhatsAppUrl, formatOrderSummaryText, ADMIN_NOTIFICATION_EMAIL } from '../lib/orderEmailService';
+import {
+  generateOrderMailtoUrl,
+  generateOrderWhatsAppUrl,
+  formatOrderSummaryText,
+  ADMIN_NOTIFICATION_EMAIL,
+  STORE_INFO_EMAIL
+} from '../lib/orderEmailService';
 
 const DEFAULT_ESTIMATED_DATE = "3-5 Business Days";
 
@@ -134,7 +140,7 @@ export const OrderConfirmationPage = () => {
 
         {/* Real-time Order Alert Info Notice */}
         <div style={{ padding: '0.85rem 1.25rem', borderRadius: '16px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: '0.88rem', fontWeight: '600', marginBottom: '1.5rem', textAlign: 'center' }}>
-          ✓ Order notification dispatched to dispatch team (<span style={{ fontWeight: '700' }}>{ADMIN_NOTIFICATION_EMAIL}</span>). Your package is being prepared!
+          ✓ Order confirmation email dispatched from <strong style={{ color: '#0F172A' }}>{STORE_INFO_EMAIL}</strong> to your inbox (<strong style={{ color: '#0066FF' }}>{order.customer?.email || 'your email'}</strong>) and dispatch team (<strong style={{ color: '#0F172A' }}>{ADMIN_NOTIFICATION_EMAIL}</strong>).
         </div>
 
         {/* Share & Email Receipt Toolbar */}

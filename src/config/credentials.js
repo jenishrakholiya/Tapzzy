@@ -71,6 +71,8 @@ export const ADMIN_CREDENTIALS = {
  */
 export const STORE_CREDENTIALS = {
   appName: 'Tapzyy',
+  infoEmail: getEnv('VITE_STORE_INFO_EMAIL', 'info@tapzzy.com'),
+  senderEmail: getEnv('VITE_STORE_SENDER_EMAIL', 'Tapzyy <info@tapzzy.com>'),
   supportEmail: getEnv('VITE_STORE_CONTACT_EMAIL', 'support@tapzyy.com'),
   supportPhone: getEnv('VITE_STORE_CONTACT_PHONE', '+91 99988 77665'),
   whatsappPhone: getEnv('VITE_STORE_WHATSAPP_PHONE', '919998877665'),
@@ -79,6 +81,8 @@ export const STORE_CREDENTIALS = {
 
 // Re-export common keys for convenient direct import
 export const ADMIN_NOTIFICATION_EMAIL = ADMIN_CREDENTIALS.notificationEmail;
+export const STORE_INFO_EMAIL = STORE_CREDENTIALS.infoEmail;
+export const STORE_SENDER_EMAIL = STORE_CREDENTIALS.senderEmail;
 
 export default {
   supabase: SUPABASE_CREDENTIALS,

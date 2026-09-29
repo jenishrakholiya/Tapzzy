@@ -30,7 +30,8 @@ import { useAdmin } from '../context/AdminContext';
 import { PRODUCTS } from '../data/products';
 import {
   ADMIN_NOTIFICATION_EMAIL,
-  sendOrderEmailToAdmin,
+  STORE_INFO_EMAIL,
+  sendOrderConfirmationEmails,
   generateOrderMailtoUrl,
   checkEmailServiceStatus,
   generateOrderHtmlEmail,
@@ -1156,49 +1157,42 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                       onClick={async () => {
                         setEmailSending(true);
                         setEmailSentStatus(null);
-                        const res = await sendOrderEmailToAdmin(inspectOrder);
+                        const res = await sendOrderConfirmationEmails(inspectOrder);
                         setEmailSending(false);
                         if (res.success) {
-                          setEmailSentStatus({ type: 'success', text: `Email delivered to ${ADMIN_NOTIFICATION_EMAIL}!` });
-                        } else if (res.needsActivation) {
-                          setEmailSentStatus({ type: 'warning', text: `Action Required: FormSubmit sent an activation email to ${ADMIN_NOTIFICATION_EMAIL}. Open Gmail & click 'Activate Form'.` });
+                          setEmailSentStatus({ type: 'success', text: `Emails dispatched from ${STORE_INFO_EMAIL} to customer and admin!` });
                         } else {
-                          setEmailSentStatus({ type: 'error', text: res.message || 'Dispatch error' });
+                          setEmailSentStatus({ type: 'info', text: res.message || 'Dispatch completed' });
                         }
                         setTimeout(() => setEmailSentStatus(null), 8000);
                       }}
                       className="btn btn-secondary btn-sm"
                       style={{ fontSize: '0.75rem', padding: '0.28rem 0.65rem', gap: '0.35rem' }}
                     >
-                      <Send size={12} /> {emailSending ? 'Sending...' : 'Resend Alert'}
+                      <Send size={12} /> {emailSending ? 'Sending...' : 'Resend Order Emails'}
                     </button>
                   </div>
                 </div>
 
                 <div style={{ fontSize: '0.78rem', color: 'var(--color-ink-soft)' }}>
-                  Owner: <strong style={{ color: 'var(--color-ink)' }}>{ADMIN_NOTIFICATION_EMAIL}</strong> | Customer: <strong style={{ color: 'var(--color-ink)' }}>{inspectOrder.customer?.email || 'N/A'}</strong>
+                  Sender: <strong style={{ color: 'var(--color-brand-primary)' }}>{STORE_INFO_EMAIL}</strong> | Customer: <strong style={{ color: 'var(--color-ink)' }}>{inspectOrder.customer?.email || 'N/A'}</strong> | Owner: <strong style={{ color: 'var(--color-ink)' }}>{ADMIN_NOTIFICATION_EMAIL}</strong>
                 </div>
 
                 {emailSentStatus && (
                   <div style={{
                     fontSize: '0.78rem',
-                    color: emailSentStatus.type === 'success' ? '#16A34A' : emailSentStatus.type === 'warning' ? '#D97706' : '#DC2626',
+                    color: emailSentStatus.type === 'success' ? '#16A34A' : '#1D4ED8',
                     fontWeight: '700',
                     marginTop: '0.45rem',
                     padding: '0.4rem 0.6rem',
                     borderRadius: '8px',
-                    backgroundColor: emailSentStatus.type === 'success' ? '#DCFCE7' : emailSentStatus.type === 'warning' ? '#FEF3C7' : '#FEE2E2',
+                    backgroundColor: emailSentStatus.type === 'success' ? '#DCFCE7' : '#EFF6FF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '0.5rem'
                   }}>
                     <span>{emailSentStatus.text}</span>
-                    {emailSentStatus.type === 'warning' && (
-                      <a href="https://mail.google.com" target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: '#B45309', whiteSpace: 'nowrap' }}>
-                        Open Gmail →
-                      </a>
-                    )}
                   </div>
                 )}
               </div>

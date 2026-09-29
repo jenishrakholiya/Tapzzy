@@ -6,7 +6,12 @@ import {
   checkSupabaseStatus,
   subscribeToRealtimeOrders
 } from '../lib/supabaseService';
-import { sendOrderEmailToAdmin, generateOrderMailtoUrl } from '../lib/orderEmailService';
+import {
+  sendOrderConfirmationEmails,
+  sendOrderEmailToAdmin,
+  sendOrderEmailToCustomer,
+  generateOrderMailtoUrl
+} from '../lib/orderEmailService';
 
 const OrderContext = createContext();
 
@@ -181,8 +186,8 @@ export const OrderProvider = ({ children }) => {
     // Save to Supabase asynchronously
     createOrderInDb(newOrder).catch((err) => console.warn('Supabase order sync error:', err));
 
-    // Send real-time order alert email to store owner (jenishrakholiya2005@gmail.com)
-    sendOrderEmailToAdmin(newOrder).catch((err) => console.warn('Email dispatch error:', err));
+    // Send real-time order confirmation emails to BOTH customer and store owner from info@tapzzy.com
+    sendOrderConfirmationEmails(newOrder).catch((err) => console.warn('Email dispatch error:', err));
 
     return newOrder;
   };
@@ -252,6 +257,8 @@ export const OrderProvider = ({ children }) => {
         updateOrderStatus,
         refreshOrders,
         dbStatus,
+        sendOrderConfirmationEmails,
+        sendOrderEmailToCustomer,
         sendOrderEmailToAdmin,
         generateOrderMailtoUrl
       }}
