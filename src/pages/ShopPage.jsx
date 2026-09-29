@@ -207,7 +207,7 @@ export const ShopPage = () => {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="shop-card-actions">
                 <Link to={`/product/${prod.slug}`} className="btn btn-secondary btn-sm" style={{ width: '100%' }}>
                   View Details
                 </Link>
@@ -223,6 +223,20 @@ export const ShopPage = () => {
           ))}
         </div>
       </div>
+
+      <style>{`
+        .shop-card-actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.75rem;
+        }
+        @media (max-width: 380px) {
+          .shop-card-actions {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+          }
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  CheckCircle2, 
-  ArrowRight, 
+import {
+  ShieldCheck,
+  CheckCircle2,
+  ArrowRight,
   ArrowLeft,
-  Check, 
-  ChevronRight, 
-  AlertCircle, 
-  ShoppingBag, 
-  Building2, 
-  User, 
-  MapPin, 
-  Package, 
+  Check,
+  ChevronRight,
+  AlertCircle,
+  ShoppingBag,
+  Building2,
+  User,
+  MapPin,
+  Package,
   Sparkles
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
@@ -23,10 +23,10 @@ import { RazorpayModal } from '../components/RazorpayModal';
 import './CheckoutPage.css';
 
 const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", 
-  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", 
-  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
   "Uttarakhand", "West Bengal", "Delhi NCR", "Chandigarh", "Puducherry"
 ];
 
@@ -56,17 +56,17 @@ export const CheckoutPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Determine which fields are relevant based on cart items
-  const hasGoogleCard = cart.some(item => 
-    item.id === 'google-review-card' || 
+  const hasGoogleCard = cart.some(item =>
+    item.id === 'google-review-card' ||
     (item.slug && item.slug.includes('google'))
   );
-  const hasInstagramCard = cart.some(item => 
-    item.id === 'instagram-card' || 
+  const hasInstagramCard = cart.some(item =>
+    item.id === 'instagram-card' ||
     (item.slug && item.slug.includes('instagram'))
   );
-  const hasCombo = cart.some(item => 
-    item.id === 'combo' || 
-    item.isCombo || 
+  const hasCombo = cart.some(item =>
+    item.id === 'combo' ||
+    item.isCombo ||
     (item.slug && item.slug.includes('combo'))
   );
 
@@ -369,22 +369,22 @@ export const CheckoutPage = () => {
 
   return (
     <div className="checkout-page">
-      <SEOHead 
-        title={currentStep === 1 ? "Customer Details | Checkout | Tapzyy" : "Review Your Order | Checkout | Tapzyy"} 
-        description="Complete your order for Tapzyy smart NFC display cards." 
+      <SEOHead
+        title={currentStep === 1 ? "Customer Details | Checkout | Tapzyy" : "Review Your Order | Checkout | Tapzyy"}
+        description="Complete your order for Tapzyy smart NFC display cards."
       />
 
       <div className="checkout-container">
-        
+
         {/* ========================================================
             PROGRESS STEPPER INDICATOR
             ① Details → ② Review → ③ Payment
         ======================================================== */}
         <div className="checkout-stepper-wrapper">
           <div className="checkout-stepper">
-            
+
             {/* Step 1: Details */}
-            <div 
+            <div
               className={`stepper-step ${currentStep === 1 ? 'active' : 'completed'}`}
               onClick={() => { if (currentStep > 1) handleBackToDetails(); }}
               style={{ cursor: currentStep > 1 ? 'pointer' : 'default' }}
@@ -393,7 +393,7 @@ export const CheckoutPage = () => {
               <div className="stepper-number">
                 {currentStep > 1 ? <Check size={13} strokeWidth={3} /> : "1"}
               </div>
-              <span className="stepper-label">① Details</span>
+              <span className="stepper-label">Details</span>
             </div>
 
             <div className="stepper-arrow">
@@ -405,7 +405,7 @@ export const CheckoutPage = () => {
               <div className="stepper-number">
                 {currentStep > 2 ? <Check size={13} strokeWidth={3} /> : "2"}
               </div>
-              <span className="stepper-label">② Review</span>
+              <span className="stepper-label">Review</span>
             </div>
 
             <div className="stepper-arrow">
@@ -415,7 +415,7 @@ export const CheckoutPage = () => {
             {/* Step 3: Payment */}
             <div className={`stepper-step ${isModalOpen ? 'active' : ''}`}>
               <div className="stepper-number">3</div>
-              <span className="stepper-label">③ Payment</span>
+              <span className="stepper-label">Payment</span>
             </div>
 
           </div>
@@ -426,10 +426,10 @@ export const CheckoutPage = () => {
         ======================================================== */}
         {currentStep === 1 && (
           <div className="checkout-grid">
-            
+
             {/* Form Column */}
             <form onSubmit={handleProceedToReview} className="checkout-card" noValidate>
-              
+
               <div className="checkout-card-header">
                 <h1 className="checkout-card-title">
                   <User size={22} color="#0066FF" />
@@ -915,7 +915,7 @@ export const CheckoutPage = () => {
         ======================================================== */}
         {currentStep === 2 && (
           <div className="review-page-wrapper">
-            
+
             <div className="review-header">
               <h1 className="review-header-title">Review Your Order</h1>
               <p className="review-header-sub">
@@ -1040,7 +1040,7 @@ export const CheckoutPage = () => {
               </h2>
 
               <div className="review-details-grid">
-                
+
                 {/* Customer Tile */}
                 <div className="review-detail-tile">
                   <div className="review-detail-heading">
@@ -1072,8 +1072,8 @@ export const CheckoutPage = () => {
                     <div className="review-detail-line">
                       <strong>Google Link:</strong>{' '}
                       <span className="review-detail-link" title={formData.googleReviewLink}>
-                        {formData.googleReviewLink.length > 35 
-                          ? `${formData.googleReviewLink.substring(0, 35)}...` 
+                        {formData.googleReviewLink.length > 35
+                          ? `${formData.googleReviewLink.substring(0, 35)}...`
                           : formData.googleReviewLink}
                       </span>
                     </div>
@@ -1142,9 +1142,9 @@ export const CheckoutPage = () => {
 
             {/* ACTION BUTTONS: Edit Details vs Continue to Payment */}
             <div className="review-actions-bar">
-              <button 
-                type="button" 
-                onClick={handleBackToDetails} 
+              <button
+                type="button"
+                onClick={handleBackToDetails}
                 className="btn-edit-details"
                 title="Go back to edit contact, business or address"
               >
@@ -1152,9 +1152,9 @@ export const CheckoutPage = () => {
                 <span>Edit Details</span>
               </button>
 
-              <button 
-                type="button" 
-                onClick={handleContinueToPayment} 
+              <button
+                type="button"
+                onClick={handleContinueToPayment}
                 className="btn-continue-payment"
                 title="Proceed to secure payment gateway"
               >

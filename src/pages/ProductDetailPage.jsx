@@ -83,17 +83,20 @@ export const ProductDetailPage = ({ overrideSlug }) => {
 
             {/* 02 — Product Visuals (Left) */}
             <div>
-              <div style={{
-                borderRadius: '24px',
-                overflow: 'hidden',
-                backgroundColor: 'var(--color-fog)',
-                border: '1px solid var(--color-line)',
-                padding: '2.5rem',
-                textAlign: 'center',
-                boxShadow: 'var(--shadow-sm)',
-                marginBottom: '1.25rem',
-                position: 'relative'
-              }}>
+              <div
+                className="pdp-image-stage"
+                style={{
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  backgroundColor: 'var(--color-fog)',
+                  border: '1px solid var(--color-line)',
+                  padding: '2.5rem',
+                  textAlign: 'center',
+                  boxShadow: 'var(--shadow-sm)',
+                  marginBottom: '1.25rem',
+                  position: 'relative'
+                }}
+              >
                 <img
                   src={galleryImages[activeImageIdx] || product.image}
                   alt={product.name}
@@ -504,7 +507,27 @@ export const ProductDetailPage = ({ overrideSlug }) => {
 
       <style>{`
         @media (max-width: 768px) {
-          .sticky-mobile-cta { display: flex !important; }
+          .sticky-mobile-cta { 
+            display: flex !important; 
+            padding-bottom: max(0.85rem, env(safe-area-inset-bottom)) !important;
+          }
+          .pdp-image-stage {
+            padding: 1.5rem 1rem !important;
+            border-radius: 18px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .pdp-qty-row {
+            flex-wrap: wrap;
+            gap: 0.75rem !important;
+          }
+          .pdp-qty-row .btn {
+            flex: 1 1 100% !important;
+            padding: 0.85rem 1rem !important;
+          }
+          .pdp-image-stage img {
+            max-height: 280px !important;
+          }
         }
       `}</style>
     </div>
