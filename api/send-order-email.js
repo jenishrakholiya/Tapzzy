@@ -249,6 +249,69 @@ function createOrderHtml(order, type = 'customer') {
 </html>`;
 }
 
+// Helper to send email via Resend with smart fallback if tapzzy.com is awaiting DNS verification
+async function sendEmailResendWithFallback(apiKey, from, to, replyTo, subject, html) {
+  try {
+    const toList = Array.isArray(to) ? to : [to];
+    let res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from,
+        to: toList,
+        reply_to: replyTo,
+        subject,
+        html
+      })
+    });
+    let data = await res.json().catch(() => ({}));
+
+    // If tapzzy.com is not yet verified on resend.com/domains, automatically fall back to onboarding@resend.dev
+    if (!res.ok && (String(data.message || '').toLowerCase().includes('not verified') || res.status === 403)) {
+      console.warn(`[Resend] Domain ${from} not verified yet, falling back to onboarding@resend.dev...`);
+      const fallbackRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'Tapzyy <onboarding@resend.dev>',
+          to: toList,
+          reply_to: replyTo || 'info@tapzzy.com',
+          subject,
+          html
+        })
+      });
+      const fallbackData = await fallbackRes.json().catch(() => ({}));
+      return {
+        success: fallbackRes.ok,
+        sender: 'Tapzyy <onboarding@resend.dev>',
+        fallback: true,
+        data: fallbackData,
+        error: fallbackRes.ok ? null : fallbackData.message
+      };
+    }
+
+    return {
+      success: res.ok,
+      sender: from,
+      fallback: false,
+      data,
+      error: res.ok ? null : data.message
+    };
+  } catch (err) {
+    return {
+      success: false,
+      sender: from,
+      error: err.message
+    };
+  }
+}
+
 // Handler function for Vercel Serverless Function
 export default async function handler(req, res) {
   // Set CORS headers
@@ -307,59 +370,51 @@ export default async function handler(req, res) {
         // Send to Customer
         if ((recipientType === 'both' || recipientType === 'customer') && customerEmail) {
           const customerHtml = createOrderHtml(order, 'customer');
-          const customerRes = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${resendApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              from: senderEmail,
-              to: [customerEmail],
-              reply_to: 'info@tapzzy.com',
-              subject: `Tapzyy Order Confirmation #${order.id} - ₹${formatInr(order.grandTotal)}`,
-              html: customerHtml
-            })
-          });
-          const customerJson = await customerRes.json().catch(() => ({}));
+          const custResult = await sendEmailResendWithFallback(
+            resendApiKey,
+            senderEmail,
+            customerEmail,
+            'info@tapzzy.com',
+            `Tapzyy Order Confirmation #${order.id} - ₹${formatInr(order.grandTotal)}`,
+            customerHtml
+          );
           results.customer = {
-            success: customerRes.ok,
+            success: custResult.success,
             recipient: customerEmail,
-            data: customerJson
+            senderUsed: custResult.sender,
+            data: custResult.data,
+            error: custResult.error
           };
         }
 
         // Send to Admin
         if (recipientType === 'both' || recipientType === 'admin') {
           const adminHtml = createOrderHtml(order, 'admin');
-          const adminRes = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${resendApiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              from: senderEmail,
-              to: [adminEmail],
-              reply_to: customerEmail || 'info@tapzzy.com',
-              subject: `🔥 New Tapzyy Order #${order.id} (₹${formatInr(order.grandTotal)}) - ${order.customer?.fullName || 'Customer'}`,
-              html: adminHtml
-            })
-          });
-          const adminJson = await adminRes.json().catch(() => ({}));
+          const adminResult = await sendEmailResendWithFallback(
+            resendApiKey,
+            senderEmail,
+            adminEmail,
+            customerEmail || 'info@tapzzy.com',
+            `🔥 New Tapzyy Order #${order.id} (₹${formatInr(order.grandTotal)}) - ${order.customer?.fullName || 'Customer'}`,
+            adminHtml
+          );
           results.admin = {
-            success: adminRes.ok,
+            success: adminResult.success,
             recipient: adminEmail,
-            data: adminJson
+            senderUsed: adminResult.sender,
+            data: adminResult.data,
+            error: adminResult.error
           };
         }
 
+        const anySuccess = (results.customer && results.customer.success) || (results.admin && results.admin.success);
+
         return res.status(200).json({
-          success: true,
+          success: anySuccess,
           provider: 'resend',
           sender: senderEmail,
           results,
-          message: `Order emails processed for ${order.id}`
+          message: `Order emails processed via Resend for #${order.id}`
         });
       }
 
