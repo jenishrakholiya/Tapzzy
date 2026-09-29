@@ -27,7 +27,7 @@ import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../context/OrderContext';
 import { useAdmin } from '../context/AdminContext';
 import { PRODUCTS } from '../data/products';
-import { ADMIN_NOTIFICATION_EMAIL, sendOrderEmailToAdmin, generateOrderMailtoUrl } from '../lib/orderEmailService';
+import { ADMIN_NOTIFICATION_EMAIL, sendOrderEmailToAdmin, generateOrderMailtoUrl, checkEmailServiceStatus } from '../lib/orderEmailService';
 
 export const AdminPage = () => {
   const { user, isAdmin, adminLogin, logout } = useAuth();
@@ -103,7 +103,22 @@ export const AdminPage = () => {
   const [contentSavedMsg, setContentSavedMsg] = useState(false);
   const [copiedSchema, setCopiedSchema] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const [emailSentStatus, setEmailSentStatus] = useState('');
+  const [emailSentStatus, setEmailSentStatus] = useState(null);
+  const [emailServiceStatus, setEmailServiceStatus] = useState(null);
+  const [checkingEmailService, setCheckingEmailService] = useState(false);
+
+  const handleCheckEmailStatus = async () => {
+    setCheckingEmailService(true);
+    const status = await checkEmailServiceStatus();
+    setEmailServiceStatus(status);
+    setCheckingEmailService(false);
+  };
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      handleCheckEmailStatus();
+    }
+  }, [user, isAdmin]);
 
   // Handle Admin Login Form
   const handleAdminLoginSubmit = (e) => {
@@ -478,6 +493,75 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
         {/* ========================================================= */}
         {activeTab === 'overview' && (
           <div>
+            {/* Email Service Status Banner */}
+            {emailServiceStatus && (
+              <div style={{
+                padding: '1rem 1.25rem',
+                borderRadius: '16px',
+                backgroundColor: emailServiceStatus.needsActivation ? '#FFFBEB' : emailServiceStatus.active ? '#F0FDF4' : '#F8FAFC',
+                border: `1.5px solid ${emailServiceStatus.needsActivation ? '#FDE68A' : emailServiceStatus.active ? '#BBF7D0' : '#E2E8F0'}`,
+                marginBottom: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: '280px' }}>
+                  <div style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    backgroundColor: emailServiceStatus.needsActivation ? '#FEF3C7' : emailServiceStatus.active ? '#DCFCE7' : '#EFF6FF',
+                    color: emailServiceStatus.needsActivation ? '#D97706' : emailServiceStatus.active ? '#16A34A' : '#0066FF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Mail size={22} />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '800', fontSize: '0.95rem', color: emailServiceStatus.needsActivation ? '#92400E' : emailServiceStatus.active ? '#166534' : '#0B1220' }}>
+                      {emailServiceStatus.needsActivation
+                        ? 'Action Required: Activate Order Notifications'
+                        : emailServiceStatus.active
+                        ? 'Automated Order Email Alerts: ACTIVE'
+                        : 'Email Dispatch System'}
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: emailServiceStatus.needsActivation ? '#B45309' : emailServiceStatus.active ? '#15803D' : '#64748B', marginTop: '2px', lineHeight: '1.4' }}>
+                      {emailServiceStatus.message}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  {emailServiceStatus.needsActivation && (
+                    <a
+                      href="https://mail.google.com"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-brand btn-sm"
+                      style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem', gap: '0.35rem' }}
+                    >
+                      Open Gmail & Activate →
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleCheckEmailStatus}
+                    disabled={checkingEmailService}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.82rem', padding: '0.5rem 0.75rem', gap: '0.35rem' }}
+                  >
+                    <RefreshCw size={13} style={{ animation: checkingEmailService ? 'spin 1s linear infinite' : 'none' }} />
+                    {checkingEmailService ? 'Checking...' : 'Check Status'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* KPI Cards Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
               <div className="card" style={{ padding: '1.5rem', borderRadius: '20px', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--color-line)', backgroundColor: '#FFFFFF' }}>
@@ -1045,11 +1129,17 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                       disabled={emailSending}
                       onClick={async () => {
                         setEmailSending(true);
-                        setEmailSentStatus('');
+                        setEmailSentStatus(null);
                         const res = await sendOrderEmailToAdmin(inspectOrder);
                         setEmailSending(false);
-                        setEmailSentStatus(res.success ? 'Email sent to owner!' : 'Email queued / fallback ready');
-                        setTimeout(() => setEmailSentStatus(''), 4000);
+                        if (res.success) {
+                          setEmailSentStatus({ type: 'success', text: `Email delivered to ${ADMIN_NOTIFICATION_EMAIL}!` });
+                        } else if (res.needsActivation) {
+                          setEmailSentStatus({ type: 'warning', text: `Action Required: FormSubmit sent an activation email to ${ADMIN_NOTIFICATION_EMAIL}. Open Gmail & click 'Activate Form'.` });
+                        } else {
+                          setEmailSentStatus({ type: 'error', text: res.message || 'Dispatch error' });
+                        }
+                        setTimeout(() => setEmailSentStatus(null), 8000);
                       }}
                       className="btn btn-secondary btn-sm"
                       style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', gap: '0.25rem' }}
@@ -1070,8 +1160,25 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                 </div>
 
                 {emailSentStatus && (
-                  <div style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: '700', marginTop: '0.35rem' }}>
-                    ✓ {emailSentStatus}
+                  <div style={{
+                    fontSize: '0.78rem',
+                    color: emailSentStatus.type === 'success' ? '#16A34A' : emailSentStatus.type === 'warning' ? '#D97706' : '#DC2626',
+                    fontWeight: '700',
+                    marginTop: '0.45rem',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '8px',
+                    backgroundColor: emailSentStatus.type === 'success' ? '#DCFCE7' : emailSentStatus.type === 'warning' ? '#FEF3C7' : '#FEE2E2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem'
+                  }}>
+                    <span>{emailSentStatus.text}</span>
+                    {emailSentStatus.type === 'warning' && (
+                      <a href="https://mail.google.com" target="_blank" rel="noreferrer" style={{ textDecoration: 'underline', color: '#B45309', whiteSpace: 'nowrap' }}>
+                        Open Gmail →
+                      </a>
+                    )}
                   </div>
                 )}
               </div>

@@ -125,14 +125,22 @@ export async function sendOrderEmailToAdmin(order) {
       body: JSON.stringify(payload)
     });
 
-    const resJson = await response.json().catch(() => ({}));
+    const isSuccess = resJson.success === 'true' || resJson.success === true;
+    const needsActivation = String(resJson.message || '').toLowerCase().includes('activation') ||
+                            String(resJson.message || '').toLowerCase().includes('activate');
 
-    if (response.ok && (resJson.success === 'true' || resJson.success === true || response.status === 200)) {
+    if (isSuccess) {
       sendResult.success = true;
+      sendResult.needsActivation = false;
       sendResult.message = `Order alert successfully dispatched to ${ADMIN_NOTIFICATION_EMAIL}`;
+    } else if (needsActivation) {
+      sendResult.success = false;
+      sendResult.needsActivation = true;
+      sendResult.message = `Action Required: FormSubmit sent an activation email to ${ADMIN_NOTIFICATION_EMAIL}. Please check your inbox or Spam folder and click "Activate Form" once to start receiving emails.`;
     } else {
-      sendResult.success = true;
-      sendResult.message = resJson.message || `Dispatched via HTTP ${response.status}`;
+      sendResult.success = false;
+      sendResult.needsActivation = false;
+      sendResult.message = resJson.message || `FormSubmit returned status: ${response.status}`;
     }
   } catch (err) {
     console.warn('[OrderEmailService] FormSubmit error:', err);
@@ -151,6 +159,45 @@ export async function sendOrderEmailToAdmin(order) {
   }
 
   return sendResult;
+}
+
+/**
+ * Check if FormSubmit has been activated for the store owner email
+ */
+export async function checkEmailServiceStatus() {
+  try {
+    const response = await fetch(`https://formsubmit.co/ajax/${ADMIN_NOTIFICATION_EMAIL}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        _subject: 'Tapzyy Email System Health Ping',
+        _captcha: 'false',
+        ping_time: new Date().toISOString()
+      })
+    });
+
+    const resJson = await response.json().catch(() => ({}));
+    const isSuccess = resJson.success === 'true' || resJson.success === true;
+    const needsActivation = String(resJson.message || '').toLowerCase().includes('activation') ||
+                            String(resJson.message || '').toLowerCase().includes('activate');
+
+    if (isSuccess) {
+      return { active: true, needsActivation: false, message: `Email notifications active and delivering to ${ADMIN_NOTIFICATION_EMAIL}` };
+    }
+    if (needsActivation) {
+      return {
+        active: false,
+        needsActivation: true,
+        message: `Action Required: FormSubmit sent an activation email to ${ADMIN_NOTIFICATION_EMAIL}. Open Gmail, search for "FormSubmit" (or check Spam), and click "Activate Form" once.`
+      };
+    }
+    return { active: false, needsActivation: false, message: resJson.message || 'Service ping completed' };
+  } catch (err) {
+    return { active: false, needsActivation: false, message: err.message || 'Network check failed' };
+  }
 }
 
 /**
