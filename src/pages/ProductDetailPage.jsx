@@ -6,7 +6,8 @@ import {
   Truck,
   Zap,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Check
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { useCart } from '../context/CartContext';

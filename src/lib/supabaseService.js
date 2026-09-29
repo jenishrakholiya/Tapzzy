@@ -52,6 +52,8 @@ function toDbOrderFormat(appOrder) {
   };
 }
 
+let isTableMissingCache = false;
+
 /**
  * Check Supabase connectivity and table readiness
  */
@@ -59,9 +61,11 @@ export async function checkSupabaseStatus() {
   try {
     const { error } = await supabase.from('orders').select('id').limit(1);
     if (!error) {
+      isTableMissingCache = false;
       return { isConnected: true, tableReady: true, message: 'Connected to live Supabase database' };
     }
-    if (error.code === 'PGRST205' || error.message?.includes('schema cache')) {
+    if (error.code === 'PGRST205' || error.status === 404 || error.message?.includes('schema cache')) {
+      isTableMissingCache = true;
       return { isConnected: true, tableReady: false, message: 'Supabase connected, but "orders" table needs to be created. Run supabase_schema.sql' };
     }
     return { isConnected: false, tableReady: false, message: error.message || 'Supabase unreachable' };
@@ -74,19 +78,25 @@ export async function checkSupabaseStatus() {
  * Fetch orders with automatic fallback to local cache
  */
 export async function fetchOrders() {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+  if (!isTableMissingCache) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (!error && Array.isArray(data) && data.length > 0) {
-      const normalized = data.map(normalizeOrderFromDb);
-      localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(normalized));
-      return { orders: normalized, fromDb: true };
+      if (error) {
+        if (error.code === 'PGRST205' || error.status === 404 || error.message?.includes('schema cache')) {
+          isTableMissingCache = true;
+        }
+      } else if (Array.isArray(data) && data.length > 0) {
+        const normalized = data.map(normalizeOrderFromDb);
+        localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(normalized));
+        return { orders: normalized, fromDb: true };
+      }
+    } catch (err) {
+      console.warn('Supabase fetchOrders error, using local cache:', err);
     }
-  } catch (err) {
-    console.warn('Supabase fetchOrders error, using local cache:', err);
   }
 
   // Fallback to localStorage
@@ -252,35 +262,41 @@ export async function updateOrderInDb(orderId, updateFields) {
  * Fetch products from Supabase or fallback to defaults
  */
 export async function fetchProductsFromDb() {
-  try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('price', { ascending: true });
+  if (!isTableMissingCache) {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('price', { ascending: true });
 
-    if (!error && Array.isArray(data) && data.length > 0) {
-      const normalized = data.map(p => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        badge: p.badge || '',
-        price: Number(p.price),
-        originalPrice: Number(p.original_price),
-        savings: Math.max(0, Number(p.original_price) - Number(p.price)),
-        image: p.image,
-        gallery: p.gallery && p.gallery.length > 0 ? p.gallery : [p.image],
-        shortDescription: p.short_description || '',
-        description: p.description || '',
-        features: p.features || [],
-        specifications: p.specifications || [],
-        isActive: p.is_active !== false,
-        isCombo: Boolean(p.is_combo)
-      }));
-      localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(normalized));
-      return { products: normalized, fromDb: true };
+      if (error) {
+        if (error.code === 'PGRST205' || error.status === 404 || error.message?.includes('schema cache')) {
+          isTableMissingCache = true;
+        }
+      } else if (Array.isArray(data) && data.length > 0) {
+        const normalized = data.map(p => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          badge: p.badge || '',
+          price: Number(p.price),
+          originalPrice: Number(p.original_price),
+          savings: Math.max(0, Number(p.original_price) - Number(p.price)),
+          image: p.image,
+          gallery: p.gallery && p.gallery.length > 0 ? p.gallery : [p.image],
+          shortDescription: p.short_description || '',
+          description: p.description || '',
+          features: p.features || [],
+          specifications: p.specifications || [],
+          isActive: p.is_active !== false,
+          isCombo: Boolean(p.is_combo)
+        }));
+        localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(normalized));
+        return { products: normalized, fromDb: true };
+      }
+    } catch (err) {
+      console.warn('Supabase fetchProducts error:', err);
     }
-  } catch (err) {
-    console.warn('Supabase fetchProducts error:', err);
   }
 
   // Fallback to local cache or defaults
