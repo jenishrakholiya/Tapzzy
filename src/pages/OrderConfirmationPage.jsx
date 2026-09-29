@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { CheckCircle, Printer, ArrowRight } from 'lucide-react';
+import { CheckCircle, Printer, ArrowRight, Mail, Share2, Copy, Check } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
+import { generateOrderMailtoUrl, generateOrderWhatsAppUrl, formatOrderSummaryText } from '../lib/orderEmailService';
 
 const DEFAULT_ESTIMATED_DATE = "3-5 Business Days";
 
@@ -28,11 +29,25 @@ const DEFAULT_ORDER = {
 export const OrderConfirmationPage = () => {
   const location = useLocation();
   const order = location.state?.order || DEFAULT_ORDER;
+  const [copied, setCopied] = useState(false);
 
   const isCod = order.paymentMethod?.toLowerCase().includes('cod');
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleCopySummary = async () => {
+    try {
+      const summaryText = formatOrderSummaryText(order, 'customer');
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Fallback
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    }
   };
 
   return (
@@ -118,8 +133,45 @@ export const OrderConfirmationPage = () => {
         </div>
 
         {/* Real-time Order Alert Info Notice */}
-        <div style={{ padding: '0.85rem 1.25rem', borderRadius: '16px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: '0.88rem', fontWeight: '600', marginBottom: '2rem', textAlign: 'center' }}>
+        <div style={{ padding: '0.85rem 1.25rem', borderRadius: '16px', backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontSize: '0.88rem', fontWeight: '600', marginBottom: '1.5rem', textAlign: 'center' }}>
           ✓ Order notification dispatched to dispatch team (<span style={{ fontWeight: '700' }}>jenishrakholiya2005@gmail.com</span>). Your package is being prepared!
+        </div>
+
+        {/* Share & Email Receipt Toolbar */}
+        <div className="card" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px', marginBottom: '2rem', border: '1px solid var(--color-line)', backgroundColor: '#FFFFFF' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--color-ink)' }}>Save or Share Your Order Receipt</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--color-ink-soft)' }}>Keep a copy in your email or share details with your team via WhatsApp.</div>
+            </div>
+            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <a
+                href={generateOrderMailtoUrl(order, 'customer')}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: '0.35rem', fontSize: '0.82rem', textDecoration: 'none' }}
+              >
+                <Mail size={15} color="#0066FF" /> Email Receipt
+              </a>
+              <a
+                href={generateOrderWhatsAppUrl(order)}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-secondary btn-sm"
+                style={{ gap: '0.35rem', fontSize: '0.82rem', textDecoration: 'none', color: '#15803D' }}
+              >
+                <Share2 size={15} color="#16A34A" /> WhatsApp
+              </a>
+              <button
+                type="button"
+                onClick={handleCopySummary}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: '0.35rem', fontSize: '0.82rem' }}
+              >
+                {copied ? <Check size={15} color="#16A34A" /> : <Copy size={15} />}
+                {copied ? 'Copied!' : 'Copy Summary'}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Action Controls */}

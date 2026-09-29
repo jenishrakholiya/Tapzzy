@@ -20,14 +20,23 @@ import {
   ExternalLink,
   Tag,
   Mail,
-  Send
+  Send,
+  Share2
 } from 'lucide-react';
 import { SEOHead } from '../components/SEOHead';
 import { useAuth } from '../context/AuthContext';
 import { useOrders } from '../context/OrderContext';
 import { useAdmin } from '../context/AdminContext';
 import { PRODUCTS } from '../data/products';
-import { ADMIN_NOTIFICATION_EMAIL, sendOrderEmailToAdmin, generateOrderMailtoUrl, checkEmailServiceStatus } from '../lib/orderEmailService';
+import {
+  ADMIN_NOTIFICATION_EMAIL,
+  sendOrderEmailToAdmin,
+  generateOrderMailtoUrl,
+  checkEmailServiceStatus,
+  generateOrderHtmlEmail,
+  formatOrderSummaryText,
+  generateOrderWhatsAppUrl
+} from '../lib/orderEmailService';
 
 export const AdminPage = () => {
   const { user, isAdmin, adminLogin, logout } = useAuth();
@@ -64,6 +73,11 @@ export const AdminPage = () => {
 
   // Order Details Inspector Modal
   const [inspectOrder, setInspectOrder] = useState(null);
+
+  // Email Template Preview & Share Modal State
+  const [emailModalOrder, setEmailModalOrder] = useState(null);
+  const [emailTemplateType, setEmailTemplateType] = useState('customer'); // 'customer' | 'admin' | 'text'
+  const [templateCopied, setTemplateCopied] = useState(false);
 
   // Product Add & Edit Modal State
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -1112,18 +1126,29 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                 </div>
               </div>
 
-              {/* Owner Email Notification Status */}
+              {/* Owner Email Notification & Template Suite */}
               <div style={{ padding: '0.85rem 1rem', borderRadius: '14px', backgroundColor: 'var(--color-fog)', border: '1px solid var(--color-line)', marginBottom: '1.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.4rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Mail size={16} color="var(--color-brand-primary)" />
-                    <div style={{ fontSize: '0.82rem' }}>
-                      <span style={{ fontWeight: '700', color: 'var(--color-ink)' }}>Owner Alert:</span>{' '}
-                      <span style={{ color: 'var(--color-ink-soft)', wordBreak: 'break-all' }}>{ADMIN_NOTIFICATION_EMAIL}</span>
+                    <div style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--color-ink)' }}>
+                      Email Notification & Templates
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmailModalOrder(inspectOrder);
+                        setEmailTemplateType('customer');
+                      }}
+                      className="btn btn-brand btn-sm"
+                      style={{ fontSize: '0.75rem', padding: '0.28rem 0.65rem', gap: '0.35rem' }}
+                    >
+                      <Eye size={13} /> View & Share Templates
+                    </button>
+
                     <button
                       type="button"
                       disabled={emailSending}
@@ -1142,21 +1167,15 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                         setTimeout(() => setEmailSentStatus(null), 8000);
                       }}
                       className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', gap: '0.25rem' }}
+                      style={{ fontSize: '0.75rem', padding: '0.28rem 0.65rem', gap: '0.35rem' }}
                     >
-                      <Send size={12} /> {emailSending ? 'Sending...' : 'Resend Email Alert'}
+                      <Send size={12} /> {emailSending ? 'Sending...' : 'Resend Alert'}
                     </button>
-
-                    <a
-                      href={generateOrderMailtoUrl(inspectOrder)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }}
-                    >
-                      Open in Mail App
-                    </a>
                   </div>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-ink-soft)' }}>
+                  Owner: <strong style={{ color: 'var(--color-ink)' }}>{ADMIN_NOTIFICATION_EMAIL}</strong> | Customer: <strong style={{ color: 'var(--color-ink)' }}>{inspectOrder.customer?.email || 'N/A'}</strong>
                 </div>
 
                 {emailSentStatus && (
@@ -1207,6 +1226,159 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                   Update Fulfillment
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* EMAIL TEMPLATE PREVIEW & SHARE SUITE MODAL */}
+        {/* ========================================================= */}
+        {emailModalOrder && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.75)', backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="card" style={{ maxWidth: '820px', width: '100%', backgroundColor: '#FFFFFF', padding: 'clamp(1rem, 3vw, 1.75rem)', borderRadius: '24px', boxShadow: 'var(--shadow-xl)', maxHeight: '94vh', display: 'flex', flexDirection: 'column' }}>
+              
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-line)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Mail size={20} color="var(--color-brand-primary)" />
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--color-ink)' }}>
+                      Order Email Templates & Sharing Suite
+                    </h3>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-ink-soft)', marginTop: '0.2rem' }}>
+                    Order <strong style={{ color: 'var(--color-brand-primary)' }}>#{emailModalOrder.id}</strong> • Total ₹{Number(emailModalOrder.grandTotal).toLocaleString('en-IN')} • Customer: {emailModalOrder.customer?.fullName || 'Customer'}
+                  </div>
+                </div>
+                <button onClick={() => setEmailModalOrder(null)} style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '0.3rem' }}>
+                  <X size={22} color="var(--color-ink-soft)" />
+                </button>
+              </div>
+
+              {/* Template Tabs & Actions Toolbar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.4rem', backgroundColor: '#F1F5F9', padding: '0.25rem', borderRadius: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setEmailTemplateType('customer')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      backgroundColor: emailTemplateType === 'customer' ? '#FFFFFF' : 'transparent',
+                      color: emailTemplateType === 'customer' ? 'var(--color-brand-primary)' : 'var(--color-ink-soft)',
+                      boxShadow: emailTemplateType === 'customer' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    Customer Receipt (HTML)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailTemplateType('admin')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      backgroundColor: emailTemplateType === 'admin' ? '#FFFFFF' : 'transparent',
+                      color: emailTemplateType === 'admin' ? 'var(--color-brand-primary)' : 'var(--color-ink-soft)',
+                      boxShadow: emailTemplateType === 'admin' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    Admin Alert (HTML)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmailTemplateType('text')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '0.8rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      backgroundColor: emailTemplateType === 'text' ? '#FFFFFF' : 'transparent',
+                      color: emailTemplateType === 'text' ? 'var(--color-brand-primary)' : 'var(--color-ink-soft)',
+                      boxShadow: emailTemplateType === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                  >
+                    Plain Text / SMS
+                  </button>
+                </div>
+
+                {/* Quick Copy & Export Buttons */}
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const content = emailTemplateType === 'text' 
+                        ? formatOrderSummaryText(emailModalOrder, 'customer')
+                        : generateOrderHtmlEmail(emailModalOrder, emailTemplateType);
+                      await navigator.clipboard.writeText(content);
+                      setTemplateCopied(true);
+                      setTimeout(() => setTemplateCopied(false), 2500);
+                    }}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.78rem', gap: '0.3rem' }}
+                  >
+                    {templateCopied ? <Check size={14} color="#16A34A" /> : <Copy size={14} />}
+                    {templateCopied ? 'Copied!' : (emailTemplateType === 'text' ? 'Copy Text' : 'Copy HTML Code')}
+                  </button>
+
+                  <a
+                    href={generateOrderMailtoUrl(emailModalOrder, 'customer')}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.78rem', gap: '0.3rem', textDecoration: 'none' }}
+                  >
+                    <Mail size={14} color="#0066FF" /> Email Customer
+                  </a>
+
+                  <a
+                    href={generateOrderWhatsAppUrl(emailModalOrder)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.78rem', gap: '0.3rem', textDecoration: 'none', color: '#15803D' }}
+                  >
+                    <Share2 size={14} color="#16A34A" /> WhatsApp
+                  </a>
+                </div>
+              </div>
+
+              {/* Template Live Preview Area */}
+              <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--color-line)', borderRadius: '16px', backgroundColor: '#F8FAFC', minHeight: '380px', maxHeight: '520px' }}>
+                {emailTemplateType === 'text' ? (
+                  <pre style={{ margin: 0, padding: '1.25rem', fontFamily: 'monospace', fontSize: '0.82rem', color: '#1E293B', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                    {formatOrderSummaryText(emailModalOrder, 'customer')}
+                  </pre>
+                ) : (
+                  <iframe
+                    title="Email Template Live Preview"
+                    srcDoc={generateOrderHtmlEmail(emailModalOrder, emailTemplateType)}
+                    style={{ width: '100%', height: '520px', border: 'none', display: 'block', backgroundColor: '#F1F5F9' }}
+                  />
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-line)', paddingTop: '0.85rem', marginTop: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--color-ink-soft)' }}>
+                  Tip: Copy the HTML code to paste into Gmail, SendGrid, or Mailchimp to send styled receipts directly.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEmailModalOrder(null)}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Close
+                </button>
+              </div>
+
             </div>
           </div>
         )}
