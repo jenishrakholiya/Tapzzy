@@ -17,80 +17,25 @@ import {
 } from 'lucide-react';
 
 export const RazorpayModal = ({ isOpen, onClose, amount, customerData, onPaymentSuccess }) => {
-  const [selectedMethod, setSelectedMethod] = useState('upi'); // 'upi' | 'card' | 'netbanking' | 'cod'
+  const [selectedMethod, setSelectedMethod] = useState('cod'); // Exclusively COD enabled
   const [isProcessing, setIsProcessing] = useState(false);
-  const [upiId, setUpiId] = useState('');
-  const [upiError, setUpiError] = useState('');
-  const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '', name: '' });
-  const [cardError, setCardError] = useState('');
-  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
-  const [codAgreed, setCodAgreed] = useState(true);
 
   if (!isOpen) return null;
 
-  // Handle Form Submission
+  // Handle Form Submission (Cash on Delivery exclusively enabled)
   const handleSubmitPayment = (e) => {
     e.preventDefault();
-    setUpiError('');
-    setCardError('');
-
-    if (selectedMethod === 'upi') {
-      if (upiId.trim() && !/^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/.test(upiId.trim())) {
-        setUpiError('Please enter a valid UPI ID (e.g. name@okhdfcbank or 9876543210@paytm)');
-        return;
-      }
-    } else if (selectedMethod === 'card') {
-      const cleanNum = cardData.number.replace(/\s+/g, '');
-      if (cleanNum.length < 15) {
-        setCardError('Please enter a valid 16-digit card number');
-        return;
-      }
-      if (!cardData.expiry || !cardData.expiry.includes('/')) {
-        setCardError('Please enter valid expiry date (MM/YY)');
-        return;
-      }
-      if (!cardData.cvv || cardData.cvv.length < 3) {
-        setCardError('Please enter 3-digit CVV');
-        return;
-      }
-    }
-
     setIsProcessing(true);
 
     setTimeout(() => {
       setIsProcessing(false);
-
-      if (selectedMethod === 'cod') {
-        onPaymentSuccess({
-          paymentMethod: 'Cash on Delivery (COD)',
-          paymentStatus: 'Pending (COD)',
-          transactionId: `COD-${Math.floor(100000 + Math.random() * 900000)}`,
-          gateway: 'Tapzyy Express COD'
-        });
-      } else if (selectedMethod === 'upi') {
-        onPaymentSuccess({
-          paymentMethod: `UPI Instant (${upiId.trim() || 'Fast QR'})`,
-          paymentStatus: 'Paid',
-          transactionId: `UPI-${Math.floor(10000000 + Math.random() * 90000000)}`,
-          gateway: 'Razorpay UPI Gateway'
-        });
-      } else if (selectedMethod === 'card') {
-        const last4 = cardData.number.replace(/\s+/g, '').slice(-4) || '8842';
-        onPaymentSuccess({
-          paymentMethod: `Card ending in •••• ${last4}`,
-          paymentStatus: 'Paid',
-          transactionId: `CARD-${Math.floor(10000000 + Math.random() * 90000000)}`,
-          gateway: 'Razorpay Secure 3D'
-        });
-      } else {
-        onPaymentSuccess({
-          paymentMethod: `NetBanking (${selectedBank})`,
-          paymentStatus: 'Paid',
-          transactionId: `NB-${Math.floor(10000000 + Math.random() * 90000000)}`,
-          gateway: 'Razorpay NetBanking'
-        });
-      }
-    }, 1200);
+      onPaymentSuccess({
+        paymentMethod: 'Cash on Delivery (COD)',
+        paymentStatus: 'Pending (COD)',
+        transactionId: `COD-${Math.floor(100000 + Math.random() * 900000)}`,
+        gateway: 'Tapzyy Express COD'
+      });
+    }, 900);
   };
 
   return (
@@ -195,8 +140,13 @@ export const RazorpayModal = ({ isOpen, onClose, amount, customerData, onPayment
 
         {/* Payment Method Selector Tabs */}
         <div style={{ padding: '1.25rem 1.5rem 0.5rem 1.5rem' }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0B1220', marginBottom: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Select Payment Method:
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: '800', color: '#0B1220', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Select Payment Method:
+            </span>
+            <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#16A34A', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.2rem 0.55rem', borderRadius: '9999px' }}>
+              Only COD Enabled
+            </span>
           </div>
 
           <div style={{
@@ -206,43 +156,75 @@ export const RazorpayModal = ({ isOpen, onClose, amount, customerData, onPayment
             backgroundColor: '#F1F5F9',
             padding: '4px',
             borderRadius: '14px',
-            marginBottom: '1.25rem'
+            marginBottom: '0.85rem'
           }}>
             {[
-              { id: 'upi', label: 'UPI / QR', icon: QrCode },
-              { id: 'card', label: 'Cards', icon: CreditCard },
-              { id: 'netbanking', label: 'NetBank', icon: Building },
-              { id: 'cod', label: 'COD Cash', icon: Banknote }
+              { id: 'upi', label: 'UPI / QR', icon: QrCode, disabled: true },
+              { id: 'card', label: 'Cards', icon: CreditCard, disabled: true },
+              { id: 'netbanking', label: 'NetBank', icon: Building, disabled: true },
+              { id: 'cod', label: 'COD Cash', icon: Banknote, disabled: false }
             ].map(tab => {
               const TabIcon = tab.icon;
               const isSelected = selectedMethod === tab.id;
+              const isDisabled = tab.disabled;
               return (
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setSelectedMethod(tab.id)}
+                  disabled={isDisabled}
+                  onClick={() => !isDisabled && setSelectedMethod(tab.id)}
                   style={{
                     padding: '0.65rem 0.35rem',
-                    border: 'none',
+                    border: isSelected ? '1.5px solid #10B981' : 'none',
                     borderRadius: '10px',
                     backgroundColor: isSelected ? '#FFFFFF' : 'transparent',
-                    color: isSelected ? '#0066FF' : '#64748B',
+                    color: isSelected ? '#047857' : '#94A3B8',
                     fontWeight: isSelected ? '800' : '600',
                     fontSize: '0.78rem',
-                    cursor: 'pointer',
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '0.25rem',
+                    opacity: isDisabled ? 0.4 : 1,
                     boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
                     transition: 'all 0.15s ease'
                   }}
+                  title={isDisabled ? "Online payment option disabled. Only Cash on Delivery is active." : "Cash on Delivery Active"}
                 >
                   <TabIcon size={16} />
                   <span>{tab.label}</span>
+                  {isDisabled && (
+                    <span style={{ fontSize: '0.58rem', color: '#94A3B8', fontWeight: '700', lineHeight: 1, textTransform: 'uppercase' }}>
+                      Disabled
+                    </span>
+                  )}
+                  {isSelected && (
+                    <span style={{ fontSize: '0.6rem', color: '#10B981', fontWeight: '800', lineHeight: 1, textTransform: 'uppercase' }}>
+                      Active
+                    </span>
+                  )}
                 </button>
               );
             })}
+          </div>
+
+          {/* Exclusive COD Notice */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.65rem 0.85rem',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+            borderRadius: '10px',
+            fontSize: '0.78rem',
+            color: '#475569',
+            marginBottom: '0.85rem',
+            lineHeight: '1.4'
+          }}>
+            <span style={{ fontSize: '0.95rem' }}>ℹ️</span>
+            <span>Online payments (UPI, Cards, NetBanking) are disabled. <strong>Only Cash on Delivery (COD) is enabled.</strong></span>
           </div>
 
           {/* TAB 1: UPI PAYMENT */}
@@ -475,7 +457,7 @@ export const RazorpayModal = ({ isOpen, onClose, amount, customerData, onPayment
               style={{
                 width: '100%',
                 padding: '0.95rem 1.25rem',
-                backgroundColor: isProcessing ? '#94A3B8' : (selectedMethod === 'cod' ? '#10B981' : '#0066FF'),
+                backgroundColor: isProcessing ? '#94A3B8' : '#10B981',
                 color: '#FFFFFF',
                 fontWeight: '800',
                 fontSize: '1rem',
@@ -486,7 +468,7 @@ export const RazorpayModal = ({ isOpen, onClose, amount, customerData, onPayment
                 gap: '0.5rem',
                 border: 'none',
                 cursor: isProcessing ? 'not-allowed' : 'pointer',
-                boxShadow: isProcessing ? 'none' : '0 4px 16px rgba(0, 102, 255, 0.25)',
+                boxShadow: isProcessing ? 'none' : '0 4px 16px rgba(16, 185, 129, 0.3)',
                 transition: 'all 0.18s ease'
               }}
             >
@@ -500,24 +482,19 @@ export const RazorpayModal = ({ isOpen, onClose, amount, customerData, onPayment
                     borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite'
                   }} />
-                  <span>Processing Secure Order...</span>
-                </>
-              ) : selectedMethod === 'cod' ? (
-                <>
-                  <CheckCircle2 size={18} />
-                  <span>Confirm Cash on Delivery (₹{Number(amount || 0).toLocaleString('en-IN')})</span>
+                  <span>Placing Order via Cash on Delivery...</span>
                 </>
               ) : (
                 <>
-                  <Lock size={16} />
-                  <span>Pay ₹{Number(amount || 0).toLocaleString('en-IN')} Securely</span>
+                  <CheckCircle2 size={18} />
+                  <span>Confirm Cash on Delivery (₹{Number(amount || 0).toLocaleString('en-IN')})</span>
                 </>
               )}
             </button>
           </form>
 
-          <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94A3B8', marginTop: '0.75rem', paddingBottom: '0.5rem' }}>
-            🔒 Safe & Secure 256-Bit SSL Encrypted Checkout • Tapzyy Guarantee
+          <div style={{ textAlign: 'center', fontSize: '0.74rem', color: '#64748B', marginTop: '0.75rem', paddingBottom: '0.5rem' }}>
+            ✓ 100% Cash on Delivery Active • Zero Advance Payment Required
           </div>
 
         </div>

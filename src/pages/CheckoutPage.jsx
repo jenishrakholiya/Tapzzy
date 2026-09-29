@@ -415,7 +415,7 @@ export const CheckoutPage = () => {
             {/* Step 3: Payment */}
             <div className={`stepper-step ${isModalOpen ? 'active' : ''}`}>
               <div className="stepper-number">3</div>
-              <span className="stepper-label">Payment</span>
+              <span className="stepper-label">COD Confirm</span>
             </div>
 
           </div>
@@ -1156,9 +1156,9 @@ export const CheckoutPage = () => {
                 type="button"
                 onClick={handleContinueToPayment}
                 className="btn-continue-payment"
-                title="Proceed to secure payment gateway"
+                title="Proceed to Cash on Delivery confirmation"
               >
-                <span>Continue to Payment</span>
+                <span>Confirm Cash on Delivery (COD)</span>
                 <ArrowRight size={18} />
               </button>
             </div>
