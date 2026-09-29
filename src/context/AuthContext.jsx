@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { ADMIN_CREDENTIALS } from '../config/credentials';
 
 const AuthContext = createContext();
 
@@ -74,18 +75,8 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: 'Please enter both Admin ID/Email and Password.' };
     }
 
-    const validIds = [
-      'admin@tapzyy.com',
-      'admin@tapzyy.in',
-      'jenishrakholiya2005@gmail.com',
-      'admin'
-    ];
-
-    const validPasswords = [
-      'admin123',
-      'tapzyy@2026',
-      'admin@123'
-    ];
+    const validIds = ADMIN_CREDENTIALS.validEmails;
+    const validPasswords = ADMIN_CREDENTIALS.validPasswords;
 
     if (validIds.includes(cleanId) && validPasswords.includes(cleanPass)) {
       const adminUser = {

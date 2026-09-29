@@ -37,6 +37,7 @@ import {
   formatOrderSummaryText,
   generateOrderWhatsAppUrl
 } from '../lib/orderEmailService';
+import { SUPABASE_CREDENTIALS } from '../config/credentials';
 
 export const AdminPage = () => {
   const { user, isAdmin, adminLogin, logout } = useAuth();
@@ -178,7 +179,7 @@ export const AdminPage = () => {
                 required
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="e.g. admin@tapzyy.com or jenishrakholiya2005@gmail.com"
+                placeholder="e.g. admin@tapzyy.com"
                 style={{ width: '100%', padding: '0.75rem', borderRadius: '12px', border: '1px solid var(--color-line)', fontSize: '0.9rem', outline: 'none' }}
               />
             </div>
@@ -929,11 +930,11 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem', marginBottom: '1.5rem', fontSize: '0.88rem' }}>
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--color-fog)', borderRadius: '12px' }}>
                   <div style={{ fontWeight: '700', color: 'var(--color-ink-soft)' }}>Project URL</div>
-                  <div style={{ fontWeight: '800', color: 'var(--color-brand-primary)', wordBreak: 'break-all' }}>https://rvlvvrpdpgmkftwbigwi.supabase.co</div>
+                  <div style={{ fontWeight: '800', color: 'var(--color-brand-primary)', wordBreak: 'break-all' }}>{SUPABASE_CREDENTIALS.url}</div>
                 </div>
                 <div style={{ padding: '0.85rem', backgroundColor: 'var(--color-fog)', borderRadius: '12px' }}>
                   <div style={{ fontWeight: '700', color: 'var(--color-ink-soft)' }}>Direct Host</div>
-                  <div style={{ fontWeight: '800', color: 'var(--color-ink)' }}>db.rvlvvrpdpgmkftwbigwi.supabase.co:5432</div>
+                  <div style={{ fontWeight: '800', color: 'var(--color-ink)' }}>{SUPABASE_CREDENTIALS.dbHost}:{SUPABASE_CREDENTIALS.dbPort}</div>
                 </div>
               </div>
 
@@ -951,7 +952,7 @@ CREATE POLICY "Allow all operations for anon/service" ON public.orders FOR ALL U
                   </button>
                 </div>
                 <p style={{ fontSize: '0.82rem', color: 'var(--color-ink-soft)', lineHeight: '1.5' }}>
-                  Copy this SQL schema and run it in your <a href="https://supabase.com/dashboard/project/rvlvvrpdpgmkftwbigwi/sql" target="_blank" rel="noreferrer" style={{ color: 'var(--color-brand-primary)', fontWeight: '700' }}>Supabase SQL Editor</a> to create the <code>orders</code>, <code>products</code>, and <code>site_settings</code> tables.
+                  Copy this SQL schema and run it in your <a href={SUPABASE_CREDENTIALS.dashboardSqlUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--color-brand-primary)', fontWeight: '700' }}>Supabase SQL Editor</a> to create the <code>orders</code>, <code>products</code>, and <code>site_settings</code> tables.
                 </p>
               </div>
             </div>

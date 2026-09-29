@@ -4,7 +4,9 @@
  * and handles dispatching real-time order alerts to store owner and customers.
  */
 
-export const ADMIN_NOTIFICATION_EMAIL = 'jenishrakholiya2005@gmail.com';
+import { ADMIN_CREDENTIALS, STORE_CREDENTIALS } from '../config/credentials';
+
+export const ADMIN_NOTIFICATION_EMAIL = ADMIN_CREDENTIALS.notificationEmail;
 const EMAIL_LOG_KEY = 'tapzyy_order_emails_log';
 
 /**
